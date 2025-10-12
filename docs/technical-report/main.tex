@@ -1,0 +1,97 @@
+%%
+%% The first command in your LaTeX source must be the \documentclass command.
+\documentclass[sigconf, pbalance]{acmart}
+
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    \normalfont B\kern-0.5em{\scshape i\kern-0.25em b}\kern-0.8em\TeX}}}
+
+%%
+%% Remove the ACM References statement and copyright notice.
+\settopmatter{printacmref=false}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+
+%% %% %% %% %%
+%% Start of the actual paper.
+\begin{document}
+
+%%
+%% Paper title.
+\title{Data Warehousing and OLAP: A Case Study on the IMDb Dataset}
+
+%%
+%% Authors
+\author{Clarence Ivan Ang}
+\affiliation{%
+  \institution{De La Salle University}
+  \city{Manila}
+  \country{Philippines}}
+\email{clarence_ivan_ang@dlsu.edu.ph}
+
+\author{Clive Jarel Ang}
+\affiliation{%
+  \institution{De La Salle University}
+  \city{Manila}
+  \country{Philippines}}
+\email{clive_jarel_c_ang@dlsu.edu.ph}
+
+\author{Malks Mogen David}
+\affiliation{%
+  \institution{De La Salle University}
+  \city{Manila}
+  \country{Philippines}}
+\email{malks_david@dlsu.edu.ph}
+
+\author{Rinaldo Adelrico Lee}
+\affiliation{%
+  \institution{De La Salle University}
+  \city{Manila}
+  \country{Philippines}}
+\email{rinaldo_lee@dlsu.edu.ph}
+
+%
+%% This command allows the author to define a more concise list of authors' names for this purpose.
+\renewcommand{\shortauthors}{Ang et al.}
+
+
+%%
+%% The abstract is a short summary of the work to be presented in the article.
+\begin{abstract}
+
+\end{abstract}
+
+
+%%
+%% Keywords
+\keywords{Data Warehouse, ETL, OLAP, Query Processing, Query Optimization}
+
+%%
+%% This command processes the author and affiliation and title information and builds the first part of the formatted document.
+\maketitle
+
+    \include{chapters/1-introduction}
+
+    \include{chapters/2-data-warehouse}
+
+    \include{chapters/3-etl-script}
+
+    \include{chapters/4-olap-application}
+
+    \include{chapters/5-query-processing-and-optimization}
+
+    \include{chapters/6-results-and-analysis}
+
+    \include{chapters/7-conclusion}
+    
+    \include{chapters/8-references}
+
+    \include{chapters/9-declarations}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{sources}
+
+\appendix
+
+    \include{chapters/10-appendix}
+
+\end{document}
