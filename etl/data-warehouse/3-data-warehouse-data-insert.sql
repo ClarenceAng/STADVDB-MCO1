@@ -36,7 +36,7 @@ USE `warehouse`;
 -- Insert data for table: warehouse.DimPerson
 -- -----------------------------------------------------
 INSERT INTO DimPerson (
-		nconst, 
+	nconst, 
     primaryName, 
     profession1, 
     profession2, 
@@ -48,21 +48,21 @@ SELECT
     primaryName,
     SUBSTRING_INDEX(SUBSTRING_INDEX(primaryProfession, ',', 1), ',', -1) AS profession1,
 		IF(
-				LENGTH(primaryProfession) - LENGTH(REPLACE(primaryProfession, ',', '')) >= 1,
-				SUBSTRING_INDEX(SUBSTRING_INDEX(primaryProfession, ',', 2), ',', -1),
-				NULL
+            LENGTH(primaryProfession) - LENGTH(REPLACE(primaryProfession, ',', '')) >= 1,
+            SUBSTRING_INDEX(SUBSTRING_INDEX(primaryProfession, ',', 2), ',', -1),
+            NULL
 		) AS profession2,
 		IF(
-				LENGTH(primaryProfession) - LENGTH(REPLACE(primaryProfession, ',', '')) >= 2,
-				SUBSTRING_INDEX(SUBSTRING_INDEX(primaryProfession, ',', 3), ',', -1),
-				NULL
+            LENGTH(primaryProfession) - LENGTH(REPLACE(primaryProfession, ',', '')) >= 2,
+            SUBSTRING_INDEX(SUBSTRING_INDEX(primaryProfession, ',', 3), ',', -1),
+            NULL
 		) AS profession3,
     CURDATE()
 FROM imdb.name_basics
 WHERE 
     nconst IS NOT NULL
     AND primaryName IS NOT NULL
-		OR primaryProfession IS NOT NULL;
+    OR primaryProfession IS NOT NULL;
 
 -- -----------------------------------------------------
 -- Insert data for table: warehouse.DimTitle
@@ -92,25 +92,25 @@ SELECT
     NULLIF(runtimeMinutes, NULL),
 		SUBSTRING_INDEX(SUBSTRING_INDEX(genres, ',', 1), ',', -1) AS genre1,
 		IF(
-				LENGTH(genres) - LENGTH(REPLACE(genres, ',', '')) >= 1,
-				SUBSTRING_INDEX(SUBSTRING_INDEX(genres, ',', 2), ',', -1),
-				NULL
+            LENGTH(genres) - LENGTH(REPLACE(genres, ',', '')) >= 1,
+            SUBSTRING_INDEX(SUBSTRING_INDEX(genres, ',', 2), ',', -1),
+            NULL
 		) AS genre2,
 		IF(
-				LENGTH(genres) - LENGTH(REPLACE(genres, ',', '')) >= 2,
-				SUBSTRING_INDEX(SUBSTRING_INDEX(genres, ',', 3), ',', -1),
-				NULL
+            LENGTH(genres) - LENGTH(REPLACE(genres, ',', '')) >= 2,
+            SUBSTRING_INDEX(SUBSTRING_INDEX(genres, ',', 3), ',', -1),
+            NULL
 		) AS genre3,
     CURDATE()
 FROM imdb.title_basics
 WHERE tconst IS NOT NULL
-		AND primaryTitle IS NOT NULL;
+    AND primaryTitle IS NOT NULL;
 
 -- -----------------------------------------------------
 -- Insert data for table: warehouse.BridgeTitlePerson
 -- -----------------------------------------------------
 INSERT IGNORE INTO BridgeTitlePerson (
-		titleID, 
+    titleID, 
     personID, 
     categoryName
 )
@@ -127,7 +127,7 @@ WHERE tp.category IS NOT NULL;
 -- Insert data for table: warehouse.DimCrew
 -- -----------------------------------------------------
 INSERT INTO DimCrew (
-		titleID, 
+    titleID, 
     personID, 
     position, 
     dateCreated
@@ -163,9 +163,9 @@ WHERE c.nconst IS NOT NULL;
 
 INSERT INTO DimCrew (
 	titleID, 
-  personID, 
-  position, 
-  dateCreated
+    personID, 
+    position, 
+    dateCreated
 )
 SELECT 
     t.titleID,
@@ -221,7 +221,7 @@ WHERE te.tconst IS NOT NULL AND te.parentTconst IS NOT NULL;
 -- Insert data for table: warehouse.DimDate
 -- -----------------------------------------------------
 INSERT IGNORE INTO DimDate (
-		date, 
+    date, 
     year, 
     quarter, 
     month, 
@@ -230,20 +230,20 @@ INSERT IGNORE INTO DimDate (
     isWeekend
 )
 SELECT DISTINCT
-		date AS date,
-		YEAR(date) AS year,
-		QUARTER(date) as quarter,
-		MONTH(date) AS month,
-		DAY(date) AS day,
-		WEEKOFYEAR(date) AS weekOfYear,
-		CASE 
-				WHEN DAYOFWEEK(date) IN (1, 7) THEN 1 
-				ELSE 0 
-		END AS isWeekend
+    date AS date,
+    YEAR(date) AS year,
+    QUARTER(date) as quarter,
+    MONTH(date) AS month,
+    DAY(date) AS day,
+    WEEKOFYEAR(date) AS weekOfYear,
+    CASE 
+        WHEN DAYOFWEEK(date) IN (1, 7) THEN 1 
+        ELSE 0 
+    END AS isWeekend
 FROM boxofficemojo.BoxOfficeRevenue;
 
 INSERT IGNORE INTO DimDate (
-		date, 
+    date, 
     year, 
     quarter, 
     month, 
@@ -252,19 +252,19 @@ INSERT IGNORE INTO DimDate (
     isWeekend
 )
 SELECT DISTINCT
-		CURDATE() AS date,
-		YEAR(CURDATE()) AS year,
-		QUARTER(CURDATE()) as quarter,
-		MONTH(CURDATE()) AS month,
-		DAY(CURDATE()) AS day,
-		WEEKOFYEAR(CURDATE()) AS weekOfYear,
-		CASE 
-				WHEN DAYOFWEEK(CURDATE()) IN (1, 7) THEN 1 
-				ELSE 0 
-		END AS isWeekend;
+    CURDATE() AS date,
+    YEAR(CURDATE()) AS year,
+    QUARTER(CURDATE()) as quarter,
+    MONTH(CURDATE()) AS month,
+    DAY(CURDATE()) AS day,
+    WEEKOFYEAR(CURDATE()) AS weekOfYear,
+    CASE 
+        WHEN DAYOFWEEK(CURDATE()) IN (1, 7) THEN 1 
+        ELSE 0 
+    END AS isWeekend;
   
 INSERT IGNORE INTO DimDate (
-		date, 
+    date, 
     year, 
     quarter, 
     month, 
@@ -273,16 +273,16 @@ INSERT IGNORE INTO DimDate (
     isWeekend
 )
 SELECT DISTINCT
-		CURDATE() + 1 AS date,
-		YEAR(CURDATE() + 1) AS year,
-		QUARTER(CURDATE() + 1) as quarter,
-		MONTH(CURDATE() + 1) AS month,
-		DAY(CURDATE() + 1) AS day,
-		WEEKOFYEAR(CURDATE() + 1) AS weekOfYear,
-		CASE 
-				WHEN DAYOFWEEK(CURDATE() + 1) IN (1, 7) THEN 1 
-				ELSE 0 
-		END AS isWeekend;
+    CURDATE() + 1 AS date,
+    YEAR(CURDATE() + 1) AS year,
+    QUARTER(CURDATE() + 1) as quarter,
+    MONTH(CURDATE() + 1) AS month,
+    DAY(CURDATE() + 1) AS day,
+    WEEKOFYEAR(CURDATE() + 1) AS weekOfYear,
+    CASE 
+        WHEN DAYOFWEEK(CURDATE() + 1) IN (1, 7) THEN 1 
+        ELSE 0 
+    END AS isWeekend;
 
 -- -----------------------------------------------------
 -- Insert data for table: warehouse.FactRatingSnapshot
