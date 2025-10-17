@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function Header() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -12,20 +13,20 @@ export default function Header() {
           type="button"
           className="inline-flex items-center p-2 text-sm text-gray-300 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600"
         >
-            <span className="sr-only">Open sidebar</span>
-              <svg
-                className="w-6 h-6"
-                aria-hidden="true"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  clipRule="evenodd"
-                  fillRule="evenodd"
-                  d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
-                ></path>
-              </svg>
+          <span className="sr-only">Open sidebar</span>
+          <svg
+            className="w-6 h-6"
+            aria-hidden="true"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              clipRule="evenodd"
+              fillRule="evenodd"
+              d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
+            ></path>
+          </svg>
         </button>
         <a href="/" className="flex flex-row gap-4 items-center   ">
           <img
@@ -43,7 +44,10 @@ export default function Header() {
       >
         <div className="h-full px-3 py-4 overflow-y-auto">
           <ul className="space-y-4 font-medium text-white">
-            <li className="flex gap-2 items-center hover:bg-[#555555] transition-colors w-full p-2 rounded">
+            <Link
+              href="/trends"
+              className="flex gap-2 items-center hover:bg-[#555555] transition-colors w-full p-2 rounded"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -57,8 +61,11 @@ export default function Header() {
                 />
               </svg>
               Trends
-            </li>
-            <li className="flex gap-2 items-center hover:bg-[#555555] transition-colors w-full p-2 rounded">
+            </Link>
+            <Link
+              href="/genre"
+              className="flex gap-2 items-center hover:bg-[#555555] transition-colors w-full p-2 rounded"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -73,8 +80,11 @@ export default function Header() {
                 <path d="M1 14a1 1 0 0 1 1-1h4a1 1 0 0 1 .894.553l.448.894a1 1 0 0 0 .894.553h3.438a1 1 0 0 0 .86-.49l.606-1.02A1 1 0 0 1 14 13h4a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-2Z" />
               </svg>
               Genre
-            </li>
-            <li className="flex gap-2 items-center hover:bg-[#555555] transition-colors w-full p-2 rounded">
+            </Link>
+            <Link
+              href="/audience"
+              className="flex gap-2 items-center hover:bg-[#555555] transition-colors w-full p-2 rounded"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -84,8 +94,11 @@ export default function Header() {
                 <path d="M10 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM1.49 15.326a.78.78 0 0 1-.358-.442 3 3 0 0 1 4.308-3.516 6.484 6.484 0 0 0-1.905 3.959c-.023.222-.014.442.025.654a4.97 4.97 0 0 1-2.07-.655ZM16.44 15.98a4.97 4.97 0 0 0 2.07-.654.78.78 0 0 0 .357-.442 3 3 0 0 0-4.308-3.517 6.484 6.484 0 0 1 1.907 3.96 2.32 2.32 0 0 1-.026.654ZM18 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM5.304 16.19a.844.844 0 0 1-.277-.71 5 5 0 0 1 9.947 0 .843.843 0 0 1-.277.71A6.975 6.975 0 0 1 10 18a6.974 6.974 0 0 1-4.696-1.81Z" />
               </svg>
               Audience
-            </li>
-            <li className="flex gap-2 items-center hover:bg-[#555555] transition-colors w-full p-2 rounded">
+            </Link>
+            <Link
+              href="/ratings"
+              className="flex gap-2 items-center hover:bg-[#555555] transition-colors w-full p-2 rounded"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -99,8 +112,11 @@ export default function Header() {
                 />
               </svg>
               Ratings
-            </li>
-            <li className="flex gap-2 items-center hover:bg-[#555555] transition-colors w-full p-2 rounded">
+            </Link>
+            <Link
+              href="/revenue"
+              className="flex gap-2 items-center hover:bg-[#555555] transition-colors w-full p-2 rounded"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -114,7 +130,7 @@ export default function Header() {
                 />
               </svg>
               Revenue
-            </li>
+            </Link>
           </ul>
         </div>
       </aside>

@@ -4,6 +4,8 @@
 
 -- Set MySQL session variables
 SET AUTOCOMMIT = 0;
+START TRANSACTION;
+
 SET GLOBAL max_allowed_packet=1073741824;
 SET GLOBAL net_read_timeout=600;
 SET GLOBAL net_write_timeout=600;
