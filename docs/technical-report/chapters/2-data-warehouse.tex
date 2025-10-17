@@ -1,0 +1,48 @@
+\section{Data Warehouse}
+
+\subsection{The Dimensional Model}
+
+The data warehouse was designed to transform IMDb’s non-commercial datasets into a structure suitable for business intelligence and analytics. The primary objective of the model is to support queries related to temporal trends across a wide variety of titles. Given these requirements, the schema follows a hybrid star–snowflake approach. Bridge tables are introduced to normalize and resolve many-to-many relationships (such as staff), while some dimensions are denormalized (such as genres) for the sake of query speed.
+
+The grain of the warehouse is defined as \textit{one row per title per snapshot date}. This choice ensures that the fact table captures changes in user ratings over time, rather than overwriting them, thereby enabling analyses such as long-term rating trajectories, season-over-season comparisons, and historical popularity tracking. The overall schema is illustrated in Figure 1.
+
+\subsection{Fact Tables}
+
+The core of the schema is the \verb|FactRatingSnapshot| table. Each record corresponds to the state of IMDb ratings for a given title on a specific snapshot date. The table contains two central measures: (i) the weighted average rating and (ii) the total number of votes. In addition, surrogate keys link the fact table to its associated dimensions (or to itself in the case of \verb|parentTitleID|, which will be discussed later). Audit columns such as \verb|dateCreated| and \verb|dateModified| are also added to store ETL metadata and serve as a compliance trail.
+
+From a modeling perspective, this table is implemented as a periodic snapshot fact table (Kimball \& Ross, 2013). While a transaction fact table would be ideal for the business requirements of the data warehouse, IMDb's dataset only provides the aggregated rating since it uses weighted averages calculated through undisclosed algorithms. Additionally, an accumulating snapshot table is not a viable option because it assumes a milestone-based process, which is practically nonexistent in the context of the business requirements. The decision was then made to model \verb|FactRatingSnapshot| as a periodic snapshot to preserve the temporal characteristic of the ratings data. Ratings and votes change continuously, and a design that overwrites the latest values would discard the historical trail necessary to analyze trends. For these reasons, the use of a periodic snapshot fact table is the most suitable method to capture the evolving state of these aggregated metrics.
+
+\subsection{Dimensions and Hierarchies}
+
+A key strength of any dimensional model lies in its ability to support OLAP operations (such as drill-down and roll-up). Each dimension was therefore designed with hierarchies that allow analysts to navigate from coarse to fine levels of granularity. This would also ensure that the schema aligns directly with the intended business intelligence applications.
+
+\begin{itemize}
+    \item \textbf{DimTitle.} This is the central descriptive dimension for all the titles in the dataset (which includes movies, series, episodes, shorts, and other formats). Attributes include identifiers, titleType, primaryTitle, originalTitle, adult flag, runtime, and production years. A self-referencing hierarchy is defined through the parentTitleID, which connects episodes to their series. This hierarchy enables drilling down from series → season → episode, or rolling up in the opposite direction, which is crucial for trend analyses such as “average rating per season” or “consistency across episodes.”
+    \item \textbf{DimEpisode.} While the series–episode relationship could be modeled solely within DimTitle, DimEpisode was introduced as a complementary dimension to capture episode-specific attributes such as seasonNumber and episodeNumber. This separation makes episode-level drill-downs semantically clearer and query-friendly: analysts can filter directly by season and episode numbers rather than relying exclusively on title metadata. DimEpisode thus works in tandem with DimTitle, offering two parallel but consistent ways of expressing hierarchy.
+    \item \textbf{DimPerson.} Contributors such as directors, actors, and writers are modeled here, with attributes including primaryName, birthYear, deathYear, and primaryProfession. The bridge structure between titles and persons captures the fact that multiple people can contribute to a title, and individuals can span many titles. Within DimPerson, a profession-based hierarchy is implicit (e.g., roll-up from individual actors to all actors), which supports analyses like “average ratings by director” or “titles per actor.”
+    \item \textbf{DimDate.} This dimension provides the calendar framework for both release and snapshot analyses. It implements the conventional hierarchy of Year → Quarter → Month → Day. This hierarchy enables drill-down from a decade to specific years or even days, and roll-up to higher-order periods. For example, trends in average ratings can be tracked by decade, narrowed down to individual years, or analyzed across quarters to detect seasonality.
+\end{itemize}
+
+\subsection{Issues Encountered}
+
+\begin{table}
+  \caption{The different title types and their count.}
+  \label{tab:title-types}
+  \begin{tabular}{cc}
+    \toprule
+    \textbf{titleType} & \textbf{COUNT(*)} \\
+    \midrule
+    short           & 1,084,187 \\
+    movie           & 726,145   \\
+    tvShort         & 10,764    \\
+    tvMovie         & 152,398   \\
+    tvEpisode       & 9,181,254 \\
+    tvSeries        & 287,817   \\
+    tvMiniSeries    & 65,091    \\
+    tvSpecial       & 54,354    \\
+    video           & 316,361   \\
+    videoGame       & 45,244    \\
+    tvPilot         & 1         \\
+    \bottomrule
+  \end{tabular}
+\end{table}
