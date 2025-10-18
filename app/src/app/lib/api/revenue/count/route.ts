@@ -1,11 +1,7 @@
-import { db } from "../../db";
+import { db } from "../../../db";
 
-export async function POST(request: Request) {
+export async function GET() {
   try {
-    const { page, pageSize } = await request.json();
-
-    const offset = page * pageSize;
-
     const [rows] = await db.query(
       `
     SELECT fbor.titleID,
@@ -25,9 +21,7 @@ export async function POST(request: Request) {
     ) lrm ON lrm.titleID = fbor.titleID
     JOIN DimDate dd ON dd.dateID = fbor.revenueRecordDateID
     GROUP BY titleID, lrm.primaryTitle
-    ORDER BY cumulativeRevenue DESC
-    LIMIT ? OFFSET ?;`,
-      [pageSize, offset]
+    ORDER BY avgRating DESC;`
     );
 
     return Response.json(rows);
