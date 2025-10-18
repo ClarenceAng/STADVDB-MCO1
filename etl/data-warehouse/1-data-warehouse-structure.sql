@@ -72,7 +72,6 @@ CREATE TABLE DimTitle (
     isAdult BOOLEAN,
     startYear INT,
     endYear INT,
-    runtimeMinutes INT,
     genre1 VARCHAR(20),
     genre2 VARCHAR(20),
     genre3 VARCHAR(20),
@@ -139,6 +138,7 @@ COLLATE = utf8mb4_unicode_ci;
 CREATE TABLE DimDate (
     dateID INT AUTO_INCREMENT PRIMARY KEY,
     date DATE,
+    decade INT,
     year INT,
     quarter INT,
     month INT,
