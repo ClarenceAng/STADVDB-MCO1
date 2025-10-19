@@ -38,9 +38,9 @@ CREATE TABLE IF NOT EXISTS BoxOfficeMojoIds(
   
   PRIMARY KEY (`boxofficemojo_id`)
 ) 
-ENGINE=InnoDB 
-DEFAULT CHARSET=utf8mb4 
-COLLATE=utf8mb4_unicode_ci;
+ENGINE = InnoDB 
+DEFAULT CHARSET = utf8mb4 
+COLLATE = utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------
 -- TABLE: boxofficemojo.BoxOfficeRevenue
@@ -48,19 +48,18 @@ COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS BoxOfficeRevenue(
   `id` int not null AUTO_INCREMENT,  
   `title` varchar(1023) not null,
-  `boxofficemojo_url` varchar(255) not null,
+  `boxofficemojo_id` varchar(31) not null,
   `date` date not null,
   `gross` decimal(12,2) not null,
   `gross_to_date` decimal(12,2) not null,
   `days_released` int not null,
-  `boxofficemojo_id` varchar(31) not null,
   
   PRIMARY KEY (`id`),
   FOREIGN KEY (`boxofficemojo_id`) REFERENCES BoxOfficeMojoIds (`boxofficemojo_id`)
 ) 
-ENGINE=InnoDB 
-DEFAULT CHARSET=utf8mb4 
-COLLATE=utf8mb4_unicode_ci;
+ENGINE = InnoDB 
+DEFAULT CHARSET = utf8mb4 
+COLLATE = utf8mb4_unicode_ci;
 
 -- ============================================================================
 -- RE-ENABLE FOREIGN KEY AND UNIQUE KEY CHECKS
