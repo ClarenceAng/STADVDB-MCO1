@@ -140,7 +140,9 @@ export default function Trends() {
           </div>
         </>
       ) : (
-        <p className="flex text-2xl font-bold justify-center">Loading...</p>
+        <p className="flex text-2xl font-bold justify-center text-[#f3ce13] mt-6 animate-pulse">
+          Loading...
+        </p>
       )}
     </div>
   );

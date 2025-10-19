@@ -7,6 +7,8 @@ export async function POST(request: Request) {
 
     const [rows] = await db.query(
       `
+    
+WITH GenreMoviesRevenues(titleID, primaryTitle, totalGrossRevenueDuringPeriodForMovie, year, month) AS (
     WITH GenreMovies(titleID, primaryTitle) AS (
     SELECT titleID, primaryTitle
     FROM DimTitle
@@ -17,14 +19,20 @@ export async function POST(request: Request) {
         OR genre3 = ?
     )
 )
-    SELECT gm.titleID, gm.primaryTitle, SUM(fbor.grossRevenue)
+    SELECT gm.titleID, gm.primaryTitle, MAX(fbor.grossRevenueToDate) AS totalGrossRevenue, dd.year, dd.month
     FROM GenreMovies gm
     JOIN FactBoxOfficeRevenue fbor
     ON fbor.titleID = gm.titleID
-    JOIN DimDate dd
-    ON fbor.revenueRecordDateID = dd.dateID
-    GROUP BY dd.quarter, dd.weekOfYear
+    JOIN DimDate dd 
+    ON dd.dateID = fbor.revenueRecordDateID 
+    GROUP BY gm.titleID, gm.primaryTitle, dd.year, dd.month
+    ORDER BY dd.year DESC
+)
+    SELECT SUM(totalGrossRevenueDuringPeriodForMovie) AS totalGrossRevenue, year, month
+    FROM GenreMoviesRevenues
+    GROUP BY year, month
     WITH ROLLUP;
+    
     `,
       [selectedGenre, selectedGenre, selectedGenre]
     );

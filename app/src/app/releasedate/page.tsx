@@ -10,6 +10,7 @@ import {
   Legend,
   Line,
 } from "recharts";
+import { release } from "os";
 
 export default function ReleaseDate() {
   const [releaseDate, setReleaseDate] = useState<ReleaseDateType[]>();
@@ -35,39 +36,47 @@ export default function ReleaseDate() {
   return (
     <div className="py-10">
       <div className="flex flex-col justify-center items-center text-center gap-2">
-        <h1 className="flex justify-center text-3xl font-bold mb-4">
-          Movies Daily Earnings since Release Date
-        </h1>
-        <LineChart width={1450} height={450} data={releaseDate}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="daysSinceRelease" />
-          <YAxis
-            label={{
-              value: "Revenue (in millions)",
-              angle: -90,
-              position: "insideLeft",
-            }}
-          />
-          <Tooltip
-            contentStyle={{
-              color: "black",
-              backgroundColor: "white",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-            }}
-            labelStyle={{
-              color: "black",
-            }}
-            labelFormatter={(label) => `Day ${label}`}
-          />
-          <Legend />
-          <Line
-            type="monotone"
-            dataKey="grossRevInMillions"
-            stroke="#f3ce13"
-            strokeWidth={2}
-          />
-        </LineChart>
+        {releaseDate ? (
+          <>
+            <h1 className="flex justify-center text-3xl font-bold mb-4">
+              Movies Daily Earnings since Release Date
+            </h1>
+            <LineChart width={1450} height={450} data={releaseDate}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="daysSinceRelease" />
+              <YAxis
+                label={{
+                  value: "Revenue (in millions)",
+                  angle: -90,
+                  position: "insideLeft",
+                }}
+              />
+              <Tooltip
+                contentStyle={{
+                  color: "black",
+                  backgroundColor: "white",
+                  borderRadius: "8px",
+                  border: "1px solid #ccc",
+                }}
+                labelStyle={{
+                  color: "black",
+                }}
+                labelFormatter={(label) => `Day ${label}`}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="grossRevInMillions"
+                stroke="#f3ce13"
+                strokeWidth={2}
+              />
+            </LineChart>
+          </>
+        ) : (
+          <p className="flex text-2xl font-bold justify-center text-[#f3ce13] mt-6 animate-pulse">
+            Loading...
+          </p>
+        )}
       </div>
     </div>
   );

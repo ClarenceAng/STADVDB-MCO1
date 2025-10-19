@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { SpearmannData } from "../lib/types/types";
+import { SpearmannType } from "../lib/types/types";
 
 export default function Spearmann() {
-  const [data, setData] = useState<SpearmannData[]>([]);
+  const [data, setData] = useState<SpearmannType[]>([]);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -41,7 +41,7 @@ export default function Spearmann() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const results: SpearmannData[] = [];
+        const results: SpearmannType[] = [];
 
         for (const genre of selectedGenres) {
           const res = await fetch("/lib/api/spearmann", {

@@ -23,7 +23,7 @@ export async function GET() {
 	) dir ON dir.titleID = mgr.titleID
     JOIN DimPerson dp ON dp.personID = dir.personID
 	GROUP BY dir.personID
-    HAVING totalMovies >= 3
+    HAVING totalMovies >= 20
     ORDER BY avgPerMovieRevenueInMillions DESC;
     `);
     console.log(rows);

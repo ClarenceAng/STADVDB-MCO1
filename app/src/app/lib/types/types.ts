@@ -31,7 +31,16 @@ export type RatingType = {
   movieCount: number;
 };
 
-export type SpearmannData = {
+export type SpearmannType = {
   genre: string;
   spearmann: number | string;
+};
+
+export type GenreType = {
+  titleID: number;
+  primaryTitle: string;
+  year: number | null;
+  month: number | null;
+  day: number | null;
+  totalGrossRevenue: number;
 };
