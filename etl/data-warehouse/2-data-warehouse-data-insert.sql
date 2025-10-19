@@ -1,5 +1,5 @@
 -- ============================================================================
--- IMDb DATASET - MySQL Data Insert
+-- DATA WAREHOUSE - MySQL Data Insert
 -- ============================================================================
 
 -- Set MySQL session variables

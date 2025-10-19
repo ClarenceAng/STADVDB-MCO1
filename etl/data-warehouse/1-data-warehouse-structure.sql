@@ -1,5 +1,5 @@
 -- ============================================================================
--- IMDb DATASET - MySQL Structure Definition
+-- DATA WAREHOUSE - MySQL Structure Definition
 -- ============================================================================
 
 -- Set MySQL session variables
