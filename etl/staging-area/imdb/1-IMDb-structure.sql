@@ -46,25 +46,6 @@ DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------
--- TABLE: imdb.title_akas
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS title_akas (
-    titleId VARCHAR(20) NOT NULL,
-    ordering INT NOT NULL,
-    title VARCHAR(1024) NOT NULL,
-    region VARCHAR(10) NULL,
-    language VARCHAR(20) NULL,
-    types VARCHAR(255) NULL,
-    attributes VARCHAR(255) NULL,
-    isOriginalTitle TINYINT NOT NULL,
-    PRIMARY KEY (titleId, ordering),
-    FOREIGN KEY (titleId) REFERENCES title_basics(tconst)
-)
-ENGINE=InnoDB 
-DEFAULT CHARACTER SET = utf8mb4 
-COLLATE = utf8mb4_unicode_ci;
-
--- -----------------------------------------------------
 -- TABLE: imdb.title_basics
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS title_basics (

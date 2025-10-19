@@ -40,16 +40,6 @@ IGNORE 1 LINES
 (nconst, primaryName, birthYear, deathYear, primaryProfession, knownForTitles);
 
 -- -----------------------------------------------------
--- Insert data for table: imdb.title.akas
--- -----------------------------------------------------
-LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/title.akas.tsv'
-INTO TABLE title_akas
-FIELDS TERMINATED BY '\t'
-LINES TERMINATED BY '\n'
-IGNORE 1 LINES
-(titleId, ordering, title, region, language, types, attributes, isOriginalTitle);
-
--- -----------------------------------------------------
 -- Insert data for table: imdb.title.basics
 -- -----------------------------------------------------
 LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/title.basics.tsv'
