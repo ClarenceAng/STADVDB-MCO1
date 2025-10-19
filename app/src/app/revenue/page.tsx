@@ -65,7 +65,9 @@ export default function Ratings() {
     <div className="p-6">
       {movies ? (
         <>
-          <h1 className="text-xl font-bold mb-4">Movies with a Low Rating</h1>
+          <h1 className="text-xl font-bold mb-4 flex justify-center">
+            Movies with a Low Ratings that Earnt the Highest Revenue
+          </h1>
           <table className="min-w-full border border-gray-300">
             <thead className="bg-white rounded-lg">
               <tr>

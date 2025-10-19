@@ -139,7 +139,9 @@ export default function Trends() {
             </LineChart>
           </div>
         </>
-      ) : null}
+      ) : (
+        <p className="flex text-2xl font-bold justify-center">Loading...</p>
+      )}
     </div>
   );
 }

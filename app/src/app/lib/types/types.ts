@@ -19,3 +19,14 @@ export type TrendsType = {
   month: number;
   day: number;
 };
+
+export type ReleaseDateType = {
+  grossRevInMillions: number;
+  daysSinceRelease: number;
+};
+
+export type RatingType = {
+  primaryName: string;
+  finalAverageRating: number;
+  movieCount: number;
+};
