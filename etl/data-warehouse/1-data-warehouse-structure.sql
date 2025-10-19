@@ -56,7 +56,7 @@ CREATE TABLE DimPerson (
     dateCreated DATE,
     dateModified DATE
 )
-ENGINE=InnoDB 
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8mb4 
 COLLATE = utf8mb4_unicode_ci;
 
@@ -78,7 +78,7 @@ CREATE TABLE DimTitle (
     dateCreated DATE,
     dateModified DATE
 )
-ENGINE=InnoDB 
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8mb4 
 COLLATE = utf8mb4_unicode_ci;
 
@@ -93,7 +93,7 @@ CREATE TABLE BridgeTitlePerson (
     FOREIGN KEY (titleID) REFERENCES DimTitle(titleID),
     FOREIGN KEY (personID) REFERENCES DimPerson(personID)
 )
-ENGINE=InnoDB 
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8mb4 
 COLLATE = utf8mb4_unicode_ci;
 
@@ -110,7 +110,7 @@ CREATE TABLE DimCrew (
     FOREIGN KEY (titleID) REFERENCES DimTitle(titleID),
     FOREIGN KEY (personID) REFERENCES DimPerson(personID)
 )
-ENGINE=InnoDB 
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8mb4 
 COLLATE = utf8mb4_unicode_ci;
 
@@ -128,7 +128,7 @@ CREATE TABLE DimEpisode (
     FOREIGN KEY (childEpisode) REFERENCES DimTitle(titleID),
     FOREIGN KEY (parentSeries) REFERENCES DimTitle(titleID)
 )
-ENGINE=InnoDB 
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8mb4 
 COLLATE = utf8mb4_unicode_ci;
 
@@ -146,7 +146,7 @@ CREATE TABLE DimDate (
     weekOfYear INT,
     isWeekend BOOLEAN
 )
-ENGINE=InnoDB 
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8mb4 
 COLLATE = utf8mb4_unicode_ci;
 
@@ -168,7 +168,7 @@ CREATE TABLE FactRatingSnapshot (
     FOREIGN KEY (titleID) REFERENCES DimTitle(titleID),
     FOREIGN KEY (snapshotDateID) REFERENCES DimDate(dateID)
 )
-ENGINE=InnoDB 
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8mb4 
 COLLATE = utf8mb4_unicode_ci;
 
@@ -189,7 +189,7 @@ CREATE TABLE FactBoxOfficeRevenue (
     FOREIGN KEY (snapshotDateID) REFERENCES DimDate(dateID),
     FOREIGN KEY (revenueRecordDateID) REFERENCES DimDate(dateID)
 )
-ENGINE=InnoDB 
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8mb4 
 COLLATE = utf8mb4_unicode_ci;
 

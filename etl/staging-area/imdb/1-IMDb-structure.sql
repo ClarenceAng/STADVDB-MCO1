@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS name_basics (
     knownForTitles VARCHAR(255),
     PRIMARY KEY (nconst)
 )
-ENGINE=InnoDB 
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8mb4 
 COLLATE = utf8mb4_unicode_ci;
 
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS title_basics (
     genres VARCHAR(255),
     PRIMARY KEY (tconst)
 )
-ENGINE=InnoDB 
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8mb4 
 COLLATE = utf8mb4_unicode_ci;
 
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS title_crew (
     PRIMARY KEY (tconst),
     FOREIGN KEY (tconst) REFERENCES title_basics(tconst)
 )
-ENGINE=InnoDB 
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8mb4 
 COLLATE = utf8mb4_unicode_ci;
 
@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS title_episode (
     FOREIGN KEY (tconst) REFERENCES title_basics(tconst),
     FOREIGN KEY (parentTconst) REFERENCES title_basics(tconst)
 )
-ENGINE=InnoDB 
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8mb4 
 COLLATE = utf8mb4_unicode_ci;
 
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS title_principals (
     FOREIGN KEY (tconst) REFERENCES title_basics(tconst),
     FOREIGN KEY (nconst) REFERENCES name_basics(nconst)
 )
-ENGINE=InnoDB 
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8mb4 
 COLLATE = utf8mb4_unicode_ci;
 
@@ -122,7 +122,7 @@ CREATE TABLE IF NOT EXISTS title_ratings (
     PRIMARY KEY (tconst),
     FOREIGN KEY (tconst) REFERENCES title_basics(tconst)
 )
-ENGINE=InnoDB 
+ENGINE = InnoDB 
 DEFAULT CHARACTER SET = utf8mb4 
 COLLATE = utf8mb4_unicode_ci;
 
