@@ -30,3 +30,8 @@ export type RatingType = {
   finalAverageRating: number;
   movieCount: number;
 };
+
+export type SpearmannData = {
+  genre: string;
+  spearmann: number | string;
+};
