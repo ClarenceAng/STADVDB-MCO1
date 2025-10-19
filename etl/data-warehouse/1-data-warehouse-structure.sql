@@ -13,7 +13,7 @@ START TRANSACTION;
 /*!40101 SET NAMES utf8mb4 */;
 
 -- Database creation and selection
-DROP SCHEMA IF EXISTS `warehouse` ;
+DROP SCHEMA IF EXISTS `warehouse`;
 CREATE DATABASE `warehouse`
   DEFAULT CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
@@ -48,7 +48,7 @@ DROP TABLE IF EXISTS DimDate;
 -- -----------------------------------------------------
 CREATE TABLE DimPerson (
     personID INT AUTO_INCREMENT PRIMARY KEY,
-    nconst VARCHAR(20) NOT NULL UNIQUE,
+    nconst VARCHAR(20) NOT NULL,
     primaryName VARCHAR(255),
     profession1 VARCHAR(255),
     profession2 VARCHAR(255),
@@ -65,7 +65,7 @@ COLLATE = utf8mb4_unicode_ci;
 -- -----------------------------------------------------
 CREATE TABLE DimTitle (
     titleID INT AUTO_INCREMENT PRIMARY KEY,
-    tconst VARCHAR(20) NOT NULL UNIQUE,
+    tconst VARCHAR(20) NOT NULL,
     titleType VARCHAR(255),
     primaryTitle VARCHAR(511),
     originalTitle VARCHAR(511),

@@ -8,16 +8,11 @@ START TRANSACTION;
 
 SET GLOBAL net_read_timeout = 28800;
 SET GLOBAL net_write_timeout = 28800;
-SET GLOBAL max_allowed_packet = 1073741824;
 SET GLOBAL wait_timeout = 28800;
 SET GLOBAL interactive_timeout = 28800;
 SET SESSION cte_max_recursion_depth = 5000;
-SET GLOBAL connect_timeout=28800;
-SET GLOBAL interactive_timeout=28800;
-SET GLOBAL wait_timeout=28800;
-SET GLOBAL bulk_insert_buffer_size = 2*1024*1024*1024;
 SET GLOBAL innodb_buffer_pool_size = 8*1024*1024*1024;
-SET GLOBAL mysqlx_read_timeout = 1800;
+SET GLOBAL max_allowed_packet = 2*1024*1024*1024;
 
 -- Character set configuration
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
