@@ -57,7 +57,7 @@
 %%
 %% The abstract is a short summary of the work to be presented in the article.
 \begin{abstract}
-
+This paper presents the design and implementation of a data warehouse that integrates IMDb's non-commercial datasets with Box Office Mojo revenue data to enable comprehensive entertainment industry analytics. The warehouse employs a hybrid star-snowflake schema containing two fact tables—\texttt{FactRatingSnapshot} for audience ratings and \texttt{FactBoxOfficeRevenue} for box office performance—along with five dimension tables supporting analyses across titles, people, episodes, and time. A three-layer ETL pipeline processes approximately 10 GB of source data using MySQL-based extraction, SQL transformation operations including recursive CTEs and string parsing functions, and constraint-aware loading that maintains referential integrity. The system is accessed through a Next.js-based OLAP application providing five analytical modules for audience analytics, genre analysis, temporal trends, rating correlations, and revenue analysis. Performance optimization techniques including indexing strategies, query rewriting, and MySQL configuration tuning reduce typical query execution times from several minutes to under 10 seconds. The resulting platform demonstrates how dimensional modeling and ETL best practices can transform heterogeneous entertainment datasets into an integrated analytical environment supporting both industry decision-making and academic research.
 \end{abstract}
 
 
@@ -69,29 +69,29 @@
 %% This command processes the author and affiliation and title information and builds the first part of the formatted document.
 \maketitle
 
-    \include{chapters/1-introduction}
+    \input{chapters/1-introduction}
 
-    \include{chapters/2-data-warehouse}
+    \input{chapters/2-data-warehouse}
 
-    \include{chapters/3-etl-script}
+    \input{chapters/3-etl-script}
 
-    \include{chapters/4-olap-application}
+    \input{chapters/4-olap-application}
 
-    \include{chapters/5-query-processing-and-optimization}
+    \input{chapters/5-query-processing-and-optimization}
 
-    \include{chapters/6-results-and-analysis}
+    \input{chapters/6-results-and-analysis}
 
-    \include{chapters/7-conclusion}
+    \input{chapters/7-conclusion}
     
-    \include{chapters/8-references}
+    \input{chapters/8-references}
 
-    \include{chapters/9-declarations}
+    \input{chapters/9-declarations}
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{sources}
 
 \appendix
 
-    \include{chapters/10-appendix}
+    \input{chapters/10-appendix}
 
 \end{document}
