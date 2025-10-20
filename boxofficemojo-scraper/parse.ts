@@ -2,6 +2,7 @@ import path from 'path'
 import fs from 'fs/promises'
 import { parse } from 'node-html-parser'
 import { createObjectCsvWriter } from 'csv-writer'
+import { stringify } from 'csv/sync'
 
 const files = [...(await fs.readdir('out')).map(x => [x.split('_')[1], path.join('out', x)])]
 
@@ -70,10 +71,10 @@ const data = (await Promise.all(promises))
                     movies.push({
                       title: rows[i].childNodes[1].childNodes[0].innerText,
                       boxofficemojo_id: /\/release\/(rl\d+)\/.*/.exec(rows[i].childNodes[1].childNodes[0].attributes.href)[1],
-                      date: new Date(`${rows[0].childNodes[day].innerText.split(' ').slice(1,3).join(' ')} ${year}`).toLocaleDateString('en-ZA', { day: '2-digit', month: '2-digit', year: 'numeric'}),
-                      gross: Number.isNaN(gross) ? 'null' : gross,
-                      gross_to_date: Number.isNaN(gross_to_date) ? 'null' : gross_to_date,
-                      days_released:  Number.isNaN(days_released) ? 'null' : days_released,
+                      date: new Date(`${rows[0].childNodes[day].innerText.split(' ').slice(1,3).join(' ')} ${year}`).toLocaleDateString('en-ZA', { day: '2-digit', month: '2-digit', year: 'numeric'}).replaceAll('/','-'),
+                      gross: Number.isNaN(gross) ? '' : gross,
+                      gross_to_date: Number.isNaN(gross_to_date) ? '' : gross_to_date,
+                      days_released:  Number.isNaN(days_released) ? '' : days_released,
                     })
                   }
                 }
@@ -81,18 +82,28 @@ const data = (await Promise.all(promises))
               })
               .flat()
 
-const csvWriter = createObjectCsvWriter({
-  path: 'box-office.csv',
-  header: [
-    {id: 'title', title: 'title'},
-    {id: 'boxofficemojo_id', title: 'boxofficemojo_id'},
-    {id: 'date', title: 'date'},
-    {id: 'gross', title: 'gross'},
-    {id: 'gross_to_date', title: 'gross_to_date'},
-    {id: 'days_released', title: 'days_released'},
-  ]
-})
+//const csvWriter = createObjectCsvWriter({
+//  path: 'box-office.tsv',
+//  header: [
+//    {id: 'title', title: 'title'},
+//    {id: 'boxofficemojo_id', title: 'boxofficemojo_id'},
+//    {id: 'date', title: 'date'},
+//    {id: 'gross', title: 'gross'},
+//    {id: 'gross_to_date', title: 'gross_to_date'},
+//    {id: 'days_released', title: 'days_released'},
+//  ],
+//  fieldDelimiter: '\t'
+//})//
 
-await csvWriter.writeRecords(data)
+//await csvWriter.writeRecords(data)
 
+
+
+await Bun.write("box-office.tsv", 
+stringify([['title', 'boxofficemojo_id', 'date', 'gross', 'gross_to_date', 'days_released'], 
+  ...data.map(x => [x.title, x.boxofficemojo_id, x.date, x.gross, x.gross_to_date, x.days_released])], {
+    delimiter: '\t'
+  })
+)
 await Bun.write("boxofficemojo_urls.txt", Object.keys(urls).join('\n'))
+
