@@ -32,7 +32,7 @@ SET UNIQUE_CHECKS = 0;
 -- -----------------------------------------------------
 -- Insert data for table: boxofficemojo.BoxOfficeMojoIds
 -- -----------------------------------------------------
-LOAD DATA INFILE '/var/lib/mysql-files/box-office-ids.tsv'
+LOAD DATA INFILE '/var/lib/mysql-files/box-office-ids.csv'
 INTO TABLE BoxOfficeMojoIds
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n'
@@ -42,13 +42,15 @@ IGNORE 1 LINES
 -- -----------------------------------------------------
 -- Insert data for table: boxofficemojo.BoxOfficeRevenue
 -- -----------------------------------------------------
-LOAD DATA INFILE '/var/lib/mysql-files/box-office.csv'
+LOAD DATA INFILE '/var/lib/mysql-files/box-office.tsv'
 INTO TABLE BoxOfficeRevenue
 FIELDS TERMINATED BY '\t'
 LINES TERMINATED BY '\n'
 IGNORE 1 LINES
-(title, boxofficemojo_id, date, gross, gross_to_date, @vdays_released)
-SET days_released = NULLIF(@vdays_released, '');
+(title, boxofficemojo_id, date, gross, @vgross_to_date, @vdays_released)
+SET 
+	days_released = NULLIF(@vdays_released, ''), 
+	gross_to_date = NULLIF(@vgross_to_date, '');
 
 -- ============================================================================
 -- RE-ENABLE FOREIGN KEY AND UNIQUE KEY CHECKS

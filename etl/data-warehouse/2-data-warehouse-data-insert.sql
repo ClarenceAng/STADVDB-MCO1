@@ -215,7 +215,6 @@ WHERE te.tconst IS NOT NULL AND te.parentTconst IS NOT NULL;
 -- -----------------------------------------------------
 INSERT IGNORE INTO DimDate (
     date, 
-    decade,
     year, 
     quarter, 
     month, 
@@ -225,7 +224,6 @@ INSERT IGNORE INTO DimDate (
 )
 SELECT DISTINCT
     date AS date,
-    FLOOR(YEAR(date) / 10) * 10 AS decade,
     YEAR(date) AS year,
     QUARTER(date) as quarter,
     MONTH(date) AS month,
@@ -239,7 +237,6 @@ FROM boxofficemojo.BoxOfficeRevenue;
 
 INSERT IGNORE INTO DimDate (
     date, 
-    decade,
     year, 
     quarter, 
     month, 
@@ -249,7 +246,6 @@ INSERT IGNORE INTO DimDate (
 )
 SELECT DISTINCT
     CURDATE() AS date,
-    FLOOR(YEAR(CURDATE()) / 10) * 10 AS decade,
     YEAR(CURDATE()) AS year,
     QUARTER(CURDATE()) as quarter,
     MONTH(CURDATE()) AS month,
@@ -262,7 +258,6 @@ SELECT DISTINCT
   
 INSERT IGNORE INTO DimDate (
     date, 
-    decade,
     year, 
     quarter, 
     month, 
@@ -272,7 +267,6 @@ INSERT IGNORE INTO DimDate (
 )
 SELECT DISTINCT
     CURDATE() + 1 AS date,
-    FLOOR(YEAR(CURDATE() + 1) / 10) * 10 AS decade,
     YEAR(CURDATE() + 1) AS year,
     QUARTER(CURDATE() + 1) as quarter,
     MONTH(CURDATE() + 1) AS month,
@@ -304,7 +298,7 @@ JOIN DimTitle t ON t.tconst = r.tconst
 JOIN DimDate d ON d.date = CURDATE()
 WHERE r.averageRating IS NOT NULL
     AND r.numVotes IS NOT NULL;
-
+    
 -- -----------------------------------------------------
 -- Insert data for table: warehouse.FactBoxOfficeRevenue
 -- -----------------------------------------------------
