@@ -1,6 +1,6 @@
 \section{ETL Script}
 
-The ETL pipeline integrates data from IMDb's non-commercial datasets and Box Office Mojo revenue data into the analytical warehouse. The process follows Kimball's three-layer architecture: extraction from source files, transformation through a staging area, and loading into the dimensional warehouse.
+The ETL pipeline integrates data from IMDb's non-commercial datasets and Box Office Mojo revenue data into the analytical warehouse. The process follows Kimball's three-layer architecture \cite{kimball2004etl}: extraction from source files, transformation through a staging area, and loading into the dimensional warehouse.
 
 \subsection{Data Volume and Loading Challenges}
 
@@ -51,7 +51,7 @@ While not done due to the scope of MCO1, future iterations could use \textit{inc
 
 \subsection{Extraction Process}
 
-Data is sourced from IMDb (\url{https://datasets.imdbws.com/}) and Box Office Mojo. IMDb provides seven TSV files: \texttt{name.basics} (12M+ personnel records), \texttt{title.basics} (11.9M titles), \texttt{title.crew} (director/writer attributions), \texttt{title.episode} (series hierarchy), \texttt{title.principals} (principal cast/crew), and \texttt{title.ratings} (aggregated ratings), and \texttt{title.akas} (dropped as discussed in Section 2). Box Office Mojo also provides data on daily domestic box office revenue obtained via web scraping.
+Data is sourced from IMDb \cite{imdb2025datasets} and Box Office Mojo \cite{boxofficemojo2025}. IMDb provides seven TSV files: \texttt{name.basics} (12M+ personnel records), \texttt{title.basics} (11.9M titles), \texttt{title.crew} (director/writer attributions), \texttt{title.episode} (series hierarchy), \texttt{title.principals} (principal cast/crew), and \texttt{title.ratings} (aggregated ratings), and \texttt{title.akas} (dropped as discussed in Section 2). Box Office Mojo also provides data on daily domestic box office revenue obtained via web scraping.
 
 Files are manually downloaded, decompressed from \texttt{.gz} format, and placed in \texttt{C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/} to satisfy MySQL's \texttt{secure\_file\_priv} security restriction. The staging area uses \texttt{LOAD DATA INFILE} for high-performance bulk loading, directly loading the rows into the tables without SQL parsing overhead. The datasets were extracted on September 15, 2025.
 

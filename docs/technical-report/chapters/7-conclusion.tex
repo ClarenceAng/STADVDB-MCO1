@@ -1,1 +1,32 @@
 \section{Conclusion}
+
+In this project, we have created an OLAP application using database warehouse techniques such as ETL, indexing, query optimization and presented data in a manner that is easily
+appealable to clients or users that want to gain a deeper understanding as to how to a movie's rating or revenues tie in to several different factors such as release dates, directors, 
+and genres. \\
+
+The importance of building a database warehouse is to make data-driven decisions through thorough analysis. Additionally, it is also used to store and keep historical data such as the
+\texttt{FactRatingSnapshot} table which contains historical ratings of each and every movie and TV show within IMDB. Using this data warehouse, we are able to preserve history and
+the moments that get snapshotted between the data. A data warehouse is not just a database for pure analysis, it's also important to remember that it contains history as we know it. \\
+
+Preparing the data warehouse would not have been possible without our ETL script. The ETL script first extracts data from its sources periodically to update new information into the data
+warehouse. Following the first step, the script then transforms the data to data that conforms to the schema and purpose of the OLAP application. Doing this enables us to keep our
+analytical queries functioning to allow us to continuously update the data we retrieve to make sure our analysis is always up to date and that we are able to store the data properly.
+Lastly, the last step involves the loading of the data into the warehouse itself in order to preserve the data to be stored and used in the application itself. \\
+
+The purpose of an OLAP is to be able to store and analyze data. An OLTP is a venue of retrieving, updating, and displaying data that should be quick and efficient. On the other hand, the
+OLAP extracts and uses the data from an OLTP to make data-driven decisions. These data-driven decisions are used to help companies and large corporations make smart and informed decisions
+that allows their companies to perform large-scale operations and develop important business strategies. \\
+
+Additionally, these decisions need to be made quickly as time is money for these large companies. This brings us to the important of query optimization as being able to analyze data
+efficiently and effectively will put a corporation's business far ahead of its competitors. Therefore, query optimizations such as database design, indexes, query restructuring, and
+even optimizations at the hardware level are all optimization strategies that these companies use to analyze their data as quickly as possible. \\
+
+However, not all these optimization strategies can be used without thought. For example, indexes should be used if the column is used throughout multiple queries and is used as a basis
+for rows in GROUP BY, ORDER BY, JOIN, and WHERE operations. Using indexes carelessly may cause for concern as retrieving new data will cause the data warehouse to consistently update
+its index and would even detriment the storage space of the data warehouse. \\
+
+While doing this project, our group had learnt and experienced multiple different aspects of database warehouse concepts and the deeper theory behind it. These include preparing an ETL
+script, migrating millions of rows on data, making database design decisions based on data profiling and domain knowledge, understanding how CPU cores work during reading and writing data,
+making readable and highly optimized queries, and so much more. Due to the develop of our application, we can now provide our users valuable insights and information as to what defines a
+movies rating and revenue whether it be the release date, genre, or director associated with the film. To other database developers, we set an example as to that even students are able to
+transform a large scale database like IMDB's into our own OLAP application that we can gain valuable insights out of. 
