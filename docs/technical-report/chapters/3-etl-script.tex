@@ -1,1 +1,118 @@
 \section{ETL Script}
+
+The ETL pipeline integrates data from IMDb's non-commercial datasets and Box Office Mojo revenue data into the analytical warehouse. The process follows Kimball's three-layer architecture: extraction from source files, transformation through a staging area, and loading into the dimensional warehouse.
+
+\subsection{Data Volume and Loading Challenges}
+
+\subsubsection{Source Data Characteristics}
+
+IMDb's dataset comprises six compressed TSV files totaling approximately 1.37 GB compressed, with the largest file (\texttt{title.principals.tsv}) containing over 94 million rows. Box Office Mojo contributes 22 MB of daily box office revenue data. The populated warehouse occupies 13 GB, reflecting a good amount of storage overhead from denormalization, surrogate keys, and indexes.
+
+\begin{table}[h]
+  \centering
+  \caption{IMDb and Box Office Mojo data source volumes.}
+  \label{tab:etl-volumes}
+  \begin{tabular}{lr}
+    \toprule
+    \textbf{Dataset} & \textbf{File Size (Compressed)} \\
+    \midrule
+    name.basics.tsv.gz       & 291.99 MB \\
+    title.basics.tsv.gz      & 212.31 MB \\
+    title.crew.tsv.gz        & 78.29 MB \\
+    title.episode.tsv.gz     & 51.01 MB \\
+    title.principals.tsv.gz  & 736.18 MB \\
+    title.ratings.tsv.gz     & 8.20 MB \\
+    \midrule
+    \textbf{IMDb Total}      & \textbf{1.37 GB} \\
+    \midrule
+    box\_office\_revenue.tsv & 22.16 MB \\
+    \midrule
+    \textbf{Grand Total}     & \textbf{1.40 GB} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsubsection{Performance Optimization and Configuration Tuning}
+
+Initial ETL attempts resulted in quite a number of timeout errors, memory exhaustion, and recursion limit failures. To address these issues, the MySQL configuration had to be tuned:
+
+\begin{itemize}
+    \item \texttt{innodb\_buffer\_pool\_size = 8GB}: Increased from the default to cache dimension tables and indexes
+    \item \texttt{max\_allowed\_packet = 2GB}: Expanded from 16 MB to accommodate large recursive CTE result sets
+    \item \texttt{cte\_max\_recursion\_depth = 5000}: Raised from 1,000 to handle deeply nested director/writer lists
+    \item Network timeouts: Extended to 8 hours for long-running bulk transformations
+\end{itemize}
+
+\subsubsection{Incremental vs. Full Refresh Strategy}
+
+The current ETL implementation uses a \textit{full refresh} strategy in which each execution drops and recreates all staging and warehouse schemas, then repopulates from the source files. This approach, while operationally simple and ensures consistent data, is unsustainable for production environments where IMDb updates daily. A full refresh ETL cycle requires approximately 2 hours end-to-end, making daily incremental updates preferable when deploying it in practical applications.
+
+While not done due to the scope of MCO1, future iterations could use \textit{incremental loading} and Change Data Capture (CDC) techniques. IMDb publishes daily differential files identifying added, modified, and deleted records. By processing only these deltas and implementing Slowly Changing Dimension Type 2 tracking (preserving historical attribute versions), the warehouse can be updated in near real-time without experiencing the penalties of a full refresh.
+
+\subsection{Extraction Process}
+
+Data is sourced from IMDb (\url{https://datasets.imdbws.com/}) and Box Office Mojo. IMDb provides seven TSV files: \texttt{name.basics} (12M+ personnel records), \texttt{title.basics} (11.9M titles), \texttt{title.crew} (director/writer attributions), \texttt{title.episode} (series hierarchy), \texttt{title.principals} (principal cast/crew), and \texttt{title.ratings} (aggregated ratings), and \texttt{title.akas} (dropped as discussed in Section 2). Box Office Mojo also provides data on daily domestic box office revenue obtained via web scraping.
+
+Files are manually downloaded, decompressed from \texttt{.gz} format, and placed in \texttt{C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/} to satisfy MySQL's \texttt{secure\_file\_priv} security restriction. The staging area uses \texttt{LOAD DATA INFILE} for high-performance bulk loading, directly loading the rows into the tables without SQL parsing overhead. The datasets were extracted on September 15, 2025.
+
+\subsection{Transformation Process}
+
+Transformations are implemented as SQL-based operations within MySQL to minimize data movement and use database-native optimization. Key transformation patterns include:
+
+\subsubsection{String Parsing for Multi-Valued Attributes}
+
+As stated earlier, IMDb encodes multi-valued attributes as comma-separated lists. One solution to address that is for fixed-width attributes (genres, professions) to be parsed using \texttt{SUBSTRING\_INDEX} into discrete columns.
+
+Meanwhile, variable-width attributes (e.g., directors and writers) require recursive CTEs to convert the lists into individual rows. The recursive pattern iteratively extracts identifiers until the list is exhausted, transforming a single row with $N$ directors into $N$ discrete rows. This decomposition accounts for approximately [30\%] of the transformation time, with recursion depths occasionally exceeding 1,000 iterations for titles with a large cardinality of directors and/or writers.
+
+\subsubsection{Data Type Conversions}
+
+Additionally, IMDb's string encoded data requires a number of explicit conversions: \texttt{isAdult} flags are converted using \texttt{CASE WHEN isAdult = '1' THEN TRUE}, and IMDb's \texttt{\N} NULL markers are handled via \texttt{LOAD DATA INFILE} configuration. Numerical attributes like ratings use \texttt{DECIMAL(3,1)} to match IMDb's precision; while revenue uses \texttt{DECIMAL(12,2)} for box office figures.
+
+\subsubsection{Surrogate Key Generation}
+
+The warehouse uses \texttt{AUTO\_INCREMENT} surrogate keys (\texttt{titleID}, \texttt{personID}) for join performance (4-byte integers vs. 20-character strings) and immutability. More importantly, natural keys are preserved as \texttt{UNIQUE} columns (\texttt{tconst}, \texttt{nconst}) to maintain a link with the source data and support incremental ETL. While populating the fact tables, joins would reference the natural keys (\texttt{JOIN DimTitle t ON t.tconst = r.tconst}), which MySQL does efficiently via unique indexes.
+
+The \texttt{AUTO\_INCREMENT} key generation during bulk inserts shows a relatively predictable behavior: keys are assigned sequentially in insertion order. No key collisions or gaps (beyond those caused by failed insertions) were observed, though transaction rollbacks can introduce non-contiguous sequences. This is an acceptable trade-off especially considering the semantics of ETL and negligibility in the overall scheme of things.
+
+\subsubsection{Date Dimension Population Strategy}
+
+\texttt{DimDate} is populated on-demand rather than pre-populated with a date range. The ETL script inserts dates referenced by box office revenue records, the current execution date (\texttt{CURDATE()}), and the subsequent date (\texttt{CURDATE() + 1}) to accommodate snapshot operations.
+
+The \texttt{INSERT IGNORE} clause prevents duplicate key errors when dates already exist (e.g., box office revenue spanning multiple years overlaps with snapshot dates). This on-demand strategy minimizes \texttt{DimDate} size—only dates actively referenced in fact tables are materialized—at the cost of requiring ETL updates when new date ranges emerge (e.g., future box office releases).
+
+Alternative strategies include pre-populating a 200-year range (1900–2100) to make sure that all conceivable dates exist upfront. This trades a modest storage cost (approximately 73,000 rows) for ETL simplicity. However, the on-demand approach aligns with the warehouse's current operational context (historical data analysis rather than prospective forecasting) and was therefore kept in the end.
+
+\subsection{Loading Process and Constraints}
+
+The ETL uses a three-layer system: source files, staging schemas (\texttt{imdb}, \texttt{boxofficemojo}), and the data warehouse. The staging area serves as an intermediate landing zone where raw TSV data is bulk-loaded with minimal transformations. However, the primary disadvantage to this approach is storage redundancy: staging tables duplicate source file content, consuming additional disk space. For multi-gigabyte datasets, this overhead is non-trivial but acceptable given the analytical and operational benefits that it would provide.
+
+Foreign key and unique constraints are temporarily disabled during bulk loading (\texttt{SET FOREIGN\_KEY\_CHECKS = 0; SET UNIQUE\_CHECKS = 0;}) to accelerate insertion, with defensive \texttt{WHERE} clauses filtering invalid references before insertion. Constraints are re-enabled post-load for validation.
+
+Dimensions are loaded before facts following dependency order: 
+
+\begin{enumerate}
+    \item \texttt{DimPerson}, \texttt{DimTitle}: Independent dimensions with no internal dependencies
+    \item \texttt{BridgeTitlePerson}, \texttt{DimCrew}: Depend on \texttt{DimPerson} and \texttt{DimTitle}
+    \item \texttt{DimEpisode}: Depends on \texttt{DimTitle} (both parent and child references)
+    \item \texttt{DimDate}: Populated from box office and snapshot dates
+    \item \texttt{FactRatingSnapshot}, \texttt{FactBoxOfficeRevenue}: Depend on all dimensions
+\end{enumerate}
+
+A notable edge case: \texttt{DimEpisode} references \texttt{DimTitle} twice (parent and child), creating a potential circular dependency if episodes could themselves be parents. IMDb's data model prohibits this (because only series can be parents), eliminating the dependency. The ETL script's \texttt{WHERE te.tconst IS NOT NULL AND te.parentTconst IS NOT NULL} filter ensures both references are valid before insertion.
+
+\subsection{Issues Encountered and Resolutions}
+
+\subsubsection{Performance Bottlenecks}
+
+As expected, the recursive CTE execution for parsing director/writer served as the primary bottleneck, accounting for 30\% of the transformation time. Some attemps at optimizing the query included increasing \texttt{cte\_max\_recursion\_depth} to 5,000 (preventing errors but not accelerating execution) and indexing source tables on \texttt{title\_crew(tconst, directors, writers)}. The latency was ultimately accepted as unavoidable given data volume.
+
+\subsubsection{Memory Exhaustion and Configuration}
+
+Early executions triggered out-of-memory errors during large \texttt{INSERT INTO ... SELECT} operations. Tuning \texttt{innodb\_buffer\_pool\_size} to 8 GB resolved this, providing sufficient cache for dimension tables. It was noted that CPU utilization peaked at 99\% during transformation phases, indicating that the workload is I/O-bound (limited by disk read/write speeds) rather than CPU-bound. Upgrading to SSD storage or increasing buffer pool size further could yield additional performance gains.
+
+\subsubsection{Box Office Mojo Title Matching}
+
+Combining Box Office Mojo revenue data with IMDb titles required finding a way to resolve the title identifiers across the different datasets. Box Office Mojo uses proprietary internal IDs, while IMDb uses \texttt{tconst} identifiers. The \texttt{BoxOfficeMojoIds} mapping table bridges this gap, associating Box Office Mojo IDs with IMDb \texttt{tconst} values.
+
+Box Office Mojo, originally an independent film revenue tracking website, was acquired by IMDb in 2008. As part of the integration, IMDb’s unique identifier (\texttt{tconst}) was incorporated into Box Office Mojo’s URLs, which created a direct correspondence between entries on both platforms. Consequently, the matching process simply required mapping each \texttt{boxofficemojo\_id} to its associated \texttt{tconst}. This approach resulted in complete coverage: every Box Office Mojo title was successfully linked to its IMDb record.

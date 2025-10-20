@@ -8,7 +8,7 @@ The data warehouse was developed to combine IMDb’s open datasets and Box Offic
 
 This decision was made by three main considerations: (i) reducing the number of joins for queries, (ii) minimizing data redundancy, and (iii) keeping referential integrity for many-to-many relationships. Pure star schemas simplify queries, but often replicate data across large tables. In contrast, snowflake schemas reduce the amount of redundancy through normalization but introduce costly joins, especially in enterprise-level warehouses.
 
-The hybrid approach addresses this problem through selective normalization. Bridge tables (\verb|BridgeTitlePerson| and \verb|DimCrew|) are used to normalize many-to-many relationships, thereby avoiding data duplication and keeping the updates consistent. Conversely, dimensions with bounded cardinality, such as genres, which IMDb restricts to a maximum of three per title, are denormalized directly into \verb|DimTitle| as \verb|genre1|, \verb|genre2|, and \verb|genre3| columns.
+The hybrid approach addresses this problem through selective normalization. Bridge tables (\texttt{BridgeTitlePerson} and \texttt{DimCrew}) are used to normalize many-to-many relationships, thereby avoiding data duplication and keeping the updates consistent. Conversely, dimensions with bounded cardinality, such as genres, which IMDb restricts to a maximum of three per title, are denormalized directly into \texttt{DimTitle} as \texttt{genre1}, \texttt{genre2}, and \texttt{genre3} columns.
 
 \subsection{Fact Tables: Granularity and Measures}
 
@@ -16,14 +16,14 @@ The warehouse uses a \textit{multi-fact architecture} with two complementary fac
 
 \subsubsection{FactRatingSnapshot}
 
-The grain of \verb|FactRatingSnapshot| is defined as \textit{one row per title per snapshot date}. Each record represents the snapshot of IMDb's rating for a specific title at a specific point in time. The table contains two additive measures:
+The grain of \texttt{FactRatingSnapshot} is defined as \textit{one row per title per snapshot date}. Each record represents the snapshot of IMDb's rating for a specific title at a specific point in time. The table contains two additive measures:
 
 \begin{itemize}
-    \item \verb|averageRating|: IMDb's weighted average rating (on a scale from 1.0–10.0)
-    \item \verb|numVotes|: The total vote count contributing to the weighted average
+    \item \texttt{averageRating}: IMDb's weighted average rating (on a scale from 1.0–10.0)
+    \item \texttt{numVotes}: The total vote count contributing to the weighted average
 \end{itemize}
 
-These measures are given details by foreign keys linked to \verb|DimTitle| and \verb|DimDate|.
+These measures are given details by foreign keys linked to \texttt{DimTitle} and \texttt{DimDate}.
 
 Following Kimball and Ross’s (2013) classification, this table is modeled as a \textit{periodic snapshot fact table}. A transaction-level model was not possible since IMDb does not show individual vote records, only aggregated results. This is because IMDb's votes are weighted by an undisclosed algorithm as a way to address unusual voting activity. Likewise, an accumulating snapshot model, which assumes well-defined process milestones, was not suitable for continuous user behavior such as rating updates.
 
@@ -31,17 +31,17 @@ Rather than overwriting ratings with each update, thereby discarding historical 
 
 \subsubsection{FactBoxOfficeRevenue}
 
-The grain of \verb|FactBoxOfficeRevenue| is defined as \textit{one row per title per revenue record date}. Each record represents the daily box office performance metrics for theatrical releases:
+The grain of \texttt{FactBoxOfficeRevenue} is defined as \textit{one row per title per revenue record date}. Each record represents the daily box office performance metrics for theatrical releases:
 
 \begin{itemize}
-    \item \verb|grossRevenue|: Daily box office gross (USD)
-    \item \verb|grossRevenueToDate|: Cumulative gross since release (USD)
-    \item \verb|daysSinceRelease|: Number of days elapsed since the initial theatrical release
+    \item \texttt{grossRevenue}: Daily box office gross (USD)
+    \item \texttt{grossRevenueToDate}: Cumulative gross since release (USD)
+    \item \texttt{daysSinceRelease}: Number of days elapsed since the initial theatrical release
 \end{itemize}
 
-\verb|revenueRecordDateID| gives a time dimension to each fact which links to the \verb|DimDate| dimension. This design was made to support more fine-grained analyses, including weekend versus weekday trends, seasonal box-office cycles, and opening-weekend performance comparisons.
+\texttt{revenueRecordDateID} gives a time dimension to each fact which links to the \texttt{DimDate} dimension. This design was made to support more fine-grained analyses, including weekend versus weekday trends, seasonal box-office cycles, and opening-weekend performance comparisons.
 
-While \verb|FactRatingSnapshot| and \verb|FactBoxOfficeRevenue| come from different data sources (IMDb and Box Office Mojo, respectively), they are connected to each other through shared dimensions. Both fact tables reference the same \verb|DimTitle| and \verb|DimDate| dimensions, allowing cross-fact analyses to be done such as investigating correlations between critical reception (IMDb ratings) and commercial success (box office performance). This multi-fact architecture shows the \textit{conformed dimension} design pattern, wherein dimensions are shared between multiple fact tables to enable integrated business intelligence (Kimball \& Ross, 2013). However, a notable limitation is that box office data is available only for theatrically released films, constraining cross-fact analyses to this subset.
+While \texttt{FactRatingSnapshot} and \texttt{FactBoxOfficeRevenue} come from different data sources (IMDb and Box Office Mojo, respectively), they are connected to each other through shared dimensions. Both fact tables reference the same \texttt{DimTitle} and \texttt{DimDate} dimensions, allowing cross-fact analyses to be done such as investigating correlations between critical reception (IMDb ratings) and commercial success (box office performance). This multi-fact architecture shows the \textit{conformed dimension} design pattern, wherein dimensions are shared between multiple fact tables to enable integrated business intelligence (Kimball \& Ross, 2013). However, a notable limitation is that box office data is available only for theatrically released films, constraining cross-fact analyses to this subset.
 
 \subsection{Dimension Design and Hierarchies}
 
@@ -49,15 +49,15 @@ Dimensional hierarchies were also defined to support drill-down, roll-up, and ti
 
 \subsubsection{DimTitle}
 
-\verb|DimTitle| serves as the main descriptive dimension, keeping records of all titles in the dataset. Attributes of the \verb|DimTitle| table include surrogate and natural keys (\verb|titleID|, \verb|tconst|), content metadata (\verb|primaryTitle|, \verb|originalTitle|, \verb|titleType|), temporal characteristics (\verb|startYear|, \verb|endYear|), content flags (\verb|isAdult|), and denormalized genre columns (\verb|genre1|, \verb|genre2|, \verb|genre3|).
+\texttt{DimTitle} serves as the main descriptive dimension, keeping records of all titles in the dataset. Attributes of the \texttt{DimTitle} table include surrogate and natural keys (\texttt{titleID}, \texttt{tconst}), content metadata (\texttt{primaryTitle}, \texttt{originalTitle}, \texttt{titleType}), temporal characteristics (\texttt{startYear}, \texttt{endYear}), content flags (\texttt{isAdult}), and denormalized genre columns (\texttt{genre1}, \texttt{genre2}, \texttt{genre3}).
 
-The dimension accommodates eleven distinct title types (Table~\ref{tab:title-types}), ranging from conventional theatrical films (\verb|movie|, 726,145 titles) to episodic television (\verb|tvEpisode|, 9,181,254 titles) and emerging formats (\verb|videoGame|, 45,244 titles).
+The dimension accommodates eleven distinct title types (Table~\ref{tab:title-types}), ranging from conventional theatrical films (\texttt{movie}, 726,145 titles) to episodic television (\texttt{tvEpisode}, 9,181,254 titles) and emerging formats (\texttt{videoGame}, 45,244 titles).
 
 \subsubsection{DimEpisode}
 
-Initially, the series-to-episode hierarchy was supposed to be implemented within \verb|DimTitle| via a self-referencing foreign key. However, this approach did not push through due to two inefficiencies: (i) it would necessitate self-joins on the large \verb|DimTitle| table (over 11 million rows), and (ii) it would lead to a large number of null values for episode-specific attributes (\verb|seasonNumber| and \verb|episodeNumber|) in non-episode title types.
+Initially, the series-to-episode hierarchy was supposed to be implemented within \texttt{DimTitle} via a self-referencing foreign key. However, this approach did not push through due to two inefficiencies: (i) it would necessitate self-joins on the large \texttt{DimTitle} table (over 11 million rows), and (ii) it would lead to a large number of null values for episode-specific attributes (\texttt{seasonNumber} and \texttt{episodeNumber}) in non-episode title types.
 
-Instead, \verb|DimEpisode| was introduced as a dimension to record episode-specific data. Each row represents an episode-to-series relationship, with foreign keys \verb|childEpisode| and \verb|parentSeries| both referencing \verb|DimTitle|. This design enables a clear hierarchy:
+Instead, \texttt{DimEpisode} was introduced as a dimension to record episode-specific data. Each row represents an episode-to-series relationship, with foreign keys \texttt{childEpisode} and \texttt{parentSeries} both referencing \texttt{DimTitle}. This design enables a clear hierarchy:
 
 \[
 \text{Series} \rightarrow \text{Season} \rightarrow \text{Episode}
@@ -74,67 +74,67 @@ WHERE de.seasonNumber IS NOT NULL
 GROUP BY de.parentSeries, de.seasonNumber;
 \end{verbatim}
 
-This query uses the smaller \verb|DimEpisode| table (9.18 million rows) rather than performing a self-join on \verb|DimTitle| (11.92 million rows). The design also avoids unnecessary null values: only episode titles populate \verb|DimEpisode|, while the remaining 2.74 million titles do not need to contain episode-specific nulls.
+This query uses the smaller \texttt{DimEpisode} table (9.18 million rows) rather than performing a self-join on \texttt{DimTitle} (11.92 million rows). The design also avoids unnecessary null values: only episode titles populate \texttt{DimEpisode}, while the remaining 2.74 million titles do not need to contain episode-specific nulls.
 
 \subsubsection{DimPerson and Bridge Structures}
 
-\verb|DimPerson| records all personnel (actors, directors, writers, etc.) with attributes including their name and up to three primary professions (\verb|profession1|, \verb|profession2|, \verb|profession3|). IMDb's source data lists professions as comma-separated values; during ETL, these are parsed into separate columns to do profession-based filtering and aggregation.
+\texttt{DimPerson} records all personnel (actors, directors, writers, etc.) with attributes including their name and up to three primary professions (\texttt{profession1}, \texttt{profession2}, \texttt{profession3}). IMDb's source data lists professions as comma-separated values; during ETL, these are parsed into separate columns to do profession-based filtering and aggregation.
 
 Two bridge structures are used to represent the many-to-many relationships between titles and personnel:
 
 \begin{itemize}
-    \item \textbf{BridgeTitlePerson}: Derived from IMDb's \verb|title_principals| table, this bridge records the principal cast and crew for each title. Each row stores \verb|titleID|, \verb|personID|, and \verb|categoryName| (e.g., actor, actress, cinematographer, producer). IMDb defines "principals" as the most prominent or credited personnel for a given title, typically limited to 10–15 individuals per title.
+    \item \textbf{BridgeTitlePerson}: Derived from IMDb's \texttt{title\_principals} table, this bridge records the principal cast and crew for each title. Each row stores \texttt{titleID}, \texttt{personID}, and \texttt{categoryName} (e.g., actor, actress, cinematographer, producer). IMDb defines "principals" as the most prominent or credited personnel for a given title, typically limited to 10–15 individuals per title.
     
-    \item \textbf{DimCrew}: Derived from IMDb's \verb|title_crew| table, this bridge focuses exclusively on directors and writers, storing \verb|titleID|, \verb|personID|, and \verb|position| (an enumeration: \{\verb|director|, \verb|writer|\}). Unlike \verb|title_principals|, which lists only the principal crew, \verb|title_crew| attempts to record all credited directors and writers, regardless of contribution or importance.
+    \item \textbf{DimCrew}: Derived from IMDb's \texttt{title\_crew} table, this bridge focuses exclusively on directors and writers, storing \texttt{titleID}, \texttt{personID}, and \texttt{position} (an enumeration: \{\texttt{director}, \texttt{writer}\}). Unlike \texttt{title\_principals}, which lists only the principal crew, \texttt{title\_crew} attempts to record all credited directors and writers, regardless of contribution or importance.
 \end{itemize}
 
-The decision was made to maintain both structures to preserve IMDb’s distinction between the principal contributors and all credited personnel. The dual-bridge approach allows the OLAP application to be more flexible: director or writer-focused analyses use the smaller \verb|DimCrew|, while broader role-based queries rely on \verb|BridgeTitlePerson|.
+The decision was made to maintain both structures to preserve IMDb’s distinction between the principal contributors and all credited personnel. The dual-bridge approach allows the OLAP application to be more flexible: director or writer-focused analyses use the smaller \texttt{DimCrew}, while broader role-based queries rely on \texttt{BridgeTitlePerson}.
 
 \subsubsection{DimDate}
 
-\verb|DimDate| defines the standard time hierarchy:
+\texttt{DimDate} defines the standard time hierarchy:
 
 \[
 \text{Year} \rightarrow \text{Quarter} \rightarrow \text{Month} \rightarrow \text{Day}
 \]
 
-The attributes of \verb|DimDate| include \verb|year|, \verb|quarter|, \verb|month|, \verb|day|, \verb|weekOfYear|, and \verb|isWeekend| (a boolean flag distinguishing weekends from weekdays). This hierarchy supports standard OLAP temporal operations, such as drilling down from annual trends to quarterly, monthly, or daily trends, or rolling up from daily statistics to aggregated periods.
+The attributes of \texttt{DimDate} include \texttt{year}, \texttt{quarter}, \texttt{month}, \texttt{day}, \texttt{weekOfYear}, and \texttt{isWeekend} (a boolean flag distinguishing weekends from weekdays). This hierarchy supports standard OLAP temporal operations, such as drilling down from annual trends to quarterly, monthly, or daily trends, or rolling up from daily statistics to aggregated periods.
 
-The \verb|weekOfYear| and \verb|isWeekend| attributes also allow time-based analyses relevant to the entertainment industry. For instance, \verb|isWeekend| can be used to query the weekend box office performance of a title, an important metric when doing revenue forecasting. Similarly, \verb|weekOfYear| may be used to detect seasonal trends such as holiday releases (e.g., increased revenue during Thanksgiving and Christmas weeks) or genre-specific seasonality (e.g., horror films in Halloween or religious titles during Holy Week).
+The \texttt{weekOfYear} and \texttt{isWeekend} attributes also allow time-based analyses relevant to the entertainment industry. For instance, \texttt{isWeekend} can be used to query the weekend box office performance of a title, an important metric when doing revenue forecasting. Similarly, \texttt{weekOfYear} may be used to detect seasonal trends such as holiday releases (e.g., increased revenue during Thanksgiving and Christmas weeks) or genre-specific seasonality (e.g., horror films in Halloween or religious titles during Holy Week).
 
 \subsection{Design Challenges and Resolutions}
 
 \subsubsection{Handling Many-to-Many Relationships}
 
-The entertainment industry naturally involves many-to-many relationships between titles and staff. A single title may involve dozens of personnel across various roles, and prominent individuals may contribute to hundreds of titles. Because of that, naive denormalization (e.g., storing all directors as a comma-separated list within \verb|DimTitle|) would result in inefficient querying and violate first normal form.
+The entertainment industry naturally involves many-to-many relationships between titles and staff. A single title may involve dozens of personnel across various roles, and prominent individuals may contribute to hundreds of titles. Because of that, naive denormalization (e.g., storing all directors as a comma-separated list within \texttt{DimTitle}) would result in inefficient querying and violate first normal form.
 
-Using bridge tables (\verb|BridgeTitlePerson|, \verb|DimCrew|) introduces additional joins but also ensures the data integrity of the warehouse. This strategy allows queries to use the most relevant table needed. For example, director-focused queries would avoid the larger \verb|BridgeTitlePerson| table by querying \verb|DimCrew| directly, reducing the amount of joins and therefore improving performance.
+Using bridge tables (\texttt{BridgeTitlePerson}, \texttt{DimCrew}) introduces additional joins but also ensures the data integrity of the warehouse. This strategy allows queries to use the most relevant table needed. For example, director-focused queries would avoid the larger \texttt{BridgeTitlePerson} table by querying \texttt{DimCrew} directly, reducing the amount of joins and therefore improving performance.
 
-The decision to use dual-bridges came from analyzing IMDb's source schema. The \verb|title_principals| and \verb|title_crew| tables serve different purposes in IMDb's data model, and maintaining this separation in the warehouse preserves the semantic distinctions between "principal contributors" (those prominently featured in credits) and "all crew" (a more comprehensive attribution). 
+The decision to use dual-bridges came from analyzing IMDb's source schema. The \texttt{title\_principals} and \texttt{title\_crew} tables serve different purposes in IMDb's data model, and maintaining this separation in the warehouse preserves the semantic distinctions between "principal contributors" (those prominently featured in credits) and "all crew" (a more comprehensive attribution). 
 
 \subsubsection{Genre Denormalization}
 
-Genres were denormalized into three columns within \verb|DimTitle| based on IMDb’s limit of three genres per title. Creating a separate \verb|DimGenre| table would have introduced unnecessary joins for a fixed-width attribute. Composite indexes on the genre columns ensure that multi-genre searches remain performant.
+Genres were denormalized into three columns within \texttt{DimTitle} based on IMDb’s limit of three genres per title. Creating a separate \texttt{DimGenre} table would have introduced unnecessary joins for a fixed-width attribute. Composite indexes on the genre columns ensure that multi-genre searches remain performant.
 
-Genres are denormalized into \verb|DimTitle| as three separate columns rather than using a normalized \verb|DimGenre| dimension with a bridge table. This decision was made due to data profiling: IMDb enforces a hard constraint of at most three genres per title, representing the "most relevant" genres. Given this bounded cardinality (0–3), the overhead of a bridge table that also requires an additional join for every genre was deemed unjustified.
+Genres are denormalized into \texttt{DimTitle} as three separate columns rather than using a normalized \texttt{DimGenre} dimension with a bridge table. This decision was made due to data profiling: IMDb enforces a hard constraint of at most three genres per title, representing the "most relevant" genres. Given this bounded cardinality (0–3), the overhead of a bridge table that also requires an additional join for every genre was deemed unjustified.
 
-MySQL's lack of native array data types, unlike PostgreSQL, further reinforced this design choice. Without the support for arrays, the alternatives were either multiple columns or a normalized bridge structure. The former was selected for performance, with the modest increase in the verbosity of the queries seen as a necessary trade-off. Genre-based queries must examine all three columns (e.g., \verb|WHERE genre1 = 'Action' OR genre2 = 'Action' OR genre3 = 'Action'|), but a composite index on \verb|(genre1, genre2, genre3)| would ensure a more efficient string matching, mitigating the performance impact of this denormalization.
+MySQL's lack of native array data types, unlike PostgreSQL, further reinforced this design choice. Without the support for arrays, the alternatives were either multiple columns or a normalized bridge structure. The former was selected for performance, with the modest increase in the verbosity of the queries seen as a necessary trade-off. Genre-based queries must examine all three columns (e.g., \texttt{WHERE genre1 = 'Action' OR genre2 = 'Action' OR genre3 = 'Action'}), but a composite index on \texttt{(genre1, genre2, genre3)} would ensure a more efficient string matching, mitigating the performance impact of this denormalization.
 
 \subsubsection{Character Encoding and Data Quality}
 
-MySQL's default \verb|latin1| encoding was inadequate for IMDb's international dataset, which includes titles in diverse scripts (Cyrillic, CJK ideographs, Arabic, Devanagari, etc.). Initial ETL attempts resulted in character corruption and insertion failures for non-Latin titles.
+MySQL's default \texttt{latin1} encoding was inadequate for IMDb's international dataset, which includes titles in diverse scripts (Cyrillic, CJK ideographs, Arabic, Devanagari, etc.). Initial ETL attempts resulted in character corruption and insertion failures for non-Latin titles.
 
-The solution involved explicitly configuring all database tables with \verb|utf8mb4| character set and \verb|utf8mb4_unicode_ci| collation. The \verb|utf8mb4| encoding supports full Unicode coverage, including four-byte characters (emojis, rare CJK ideographs), which led to a more accurate representation of IMDb's multilingual content. This configuration was enforced at both the database and table levels to prevent inconsistencies when encoding characters: 
+The solution involved explicitly configuring all database tables with \texttt{utf8mb4} character set and \texttt{utf8mb4\_unicode\_ci} collation. The \texttt{utf8mb4} encoding supports full Unicode coverage, including four-byte characters (emojis, rare CJK ideographs), which led to a more accurate representation of IMDb's multilingual content. This configuration was enforced at both the database and table levels to prevent inconsistencies when encoding characters: 
 
 \begin{verbatim}
 CREATE DATABASE `warehouse`
   DEFAULT CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
+  COLLATE utf8mb4\_unicode\_ci;
 \end{verbatim}
 
 \subsubsection{Episode–Series Integrity}
 
-With over 9.18 million episode records and only 287,000 series records at the time of writing, dealing with the referential integrity between \verb|DimEpisode| and \verb|DimTitle| was an important step of the design process. Data profiling showed that there were only two orphaned episodes (episodes lacking a valid \verb|parentSeries| reference) in the source dataset. Further investigation revealed these as episodes from a recently aired Filipino series (\textit{MAKA Lovestream}) that had not yet been linked to its parent series in IMDb's database at the time of extraction. Subsequent verification confirmed that IMDb had resolved these orphans within days, linking the episodes to their series.
+With over 9.18 million episode records and only 287,000 series records at the time of writing, dealing with the referential integrity between \texttt{DimEpisode} and \texttt{DimTitle} was an important step of the design process. Data profiling showed that there were only two orphaned episodes (episodes lacking a valid \texttt{parentSeries} reference) in the source dataset. Further investigation revealed these as episodes from a recently aired Filipino series (\textit{MAKA Lovestream}) that had not yet been linked to its parent series in IMDb's database at the time of extraction. Subsequent verification confirmed that IMDb had resolved these orphans within days, linking the episodes to their series.
 
 To address this, the ETL pipeline enforces foreign key constraints during insertion, causing orphaned episodes to be rejected. A secondary process can re-attempt the insertion of rejected episodes in subsequent ETL cycles as the original dataset's data stabilizes. The negligible orphan rate (~0.00002\%) justifies the decision to enforce strict referential integrity without complex exception handling.
 
@@ -165,8 +165,8 @@ To address this, the ETL pipeline enforces foreign key constraints during insert
   \end{tabular}
 \end{table}
 
-The dataset spans eleven distinct title types as seen in (Table~\ref{tab:title-types}). This dilemma posed a potential problem: should the schema partition titles by type into separate tables, or accommodate all types within a unified \verb|DimTitle|?
+The dataset spans eleven distinct title types as seen in (Table~\ref{tab:title-types}). This dilemma posed a potential problem: should the schema partition titles by type into separate tables, or accommodate all types within a unified \texttt{DimTitle}?
 
-Similar to what was said earlier, a unified approach was adopted for two reasons. First, title types share a consistent attribute set with minimal variation. Attributes such as \verb|primaryTitle|, \verb|startYear|, and \verb|genres| apply universally across types. Type-specific attributes (e.g., episode numbers) are relegated to specialized dimensions like \verb|DimEpisode|, avoiding null contamination in the core title dimension. Second, partitioning by type would complicate cross-type analyses (e.g., comparing ratings for theatrical films versus television movies) and result in more complex joins.
+Similar to what was said earlier, a unified approach was adopted for two reasons. First, title types share a consistent attribute set with minimal variation. Attributes such as \texttt{primaryTitle}, \texttt{startYear}, and \texttt{genres} apply universally across types. Type-specific attributes (e.g., episode numbers) are relegated to specialized dimensions like \texttt{DimEpisode}, avoiding null contamination in the core title dimension. Second, partitioning by type would complicate cross-type analyses (e.g., comparing ratings for theatrical films versus television movies) and result in more complex joins.
 
-A notable outlier is the \verb|tvPilot| type, represented by a single record. While this appears to be an anomaly, possibly resulting from IMDb's reclassification of pilots as regular episodes, automatic filtering was not implemented. Manual removal would undermine the ETL process, while rule-based exclusion (e.g., "drop types with fewer than $N$ instances") risks discarding legitimate rare formats. The decision to retain all title types would preserve flexibility: should IMDb later expand the \verb|tvPilot| category, the warehouse will accommodate these entries without schema modification. The negligible impact of a single anomalous record serves as a precedent enough to justify this approach.
+A notable outlier is the \texttt{tvPilot} type, represented by a single record. While this appears to be an anomaly, possibly resulting from IMDb's reclassification of pilots as regular episodes, automatic filtering was not implemented. Manual removal would undermine the ETL process, while rule-based exclusion (e.g., "drop types with fewer than $N$ instances") risks discarding legitimate rare formats. The decision to retain all title types would preserve flexibility: should IMDb later expand the \texttt{tvPilot} category, the warehouse will accommodate these entries without schema modification. The negligible impact of a single anomalous record serves as a precedent enough to justify this approach.
