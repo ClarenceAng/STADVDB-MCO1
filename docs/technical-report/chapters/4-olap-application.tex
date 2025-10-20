@@ -1,1 +1,321 @@
 \section{OLAP Application}
+
+\subsection{Purpose of the Application}
+
+The main purpose of our OLAP application is to help investors or companies gain valuable insight into consistent directors who have performed well in terms of both ratings and revenue. The application also explores movies that may have scored low in ratings but still achieved a high revenue for its rating. Additionally, it provides data on movies of certain genres across specific months or years to identify which genres are thriving or underperforming. This information helps users determine the best time of year to release certain genres and gives them a strong starting point for further research into performance trends.
+
+\subsection{Decision-Making or Analytical Tasks}
+
+The application supports decision-making and analytical tasks such as identifying high profile directors, evaluating the relationship between movie ratings and revenue, and analyzing genre performance over time. It also assists users in discovering patterns between audience reception and profitability through performing a Spearman correlation test between ratings and revenue. These results enable investors and companies to make data-decisions on production strategies, release timing, and deciding on a genre.
+
+\subsection{Analytical Reports for Each Query}
+
+As a foreword: technically, slicing is present in all the queries, since we’re only ever considering movies in our analyses (which is a slice of the overall dataset). In hindsight, maybe we should've dropped non-movie data, but it was still something we were considering to analyze; we just didn't end up doing anything with episodal entries.
+
+\paragraph{Query 1}
+This query retrieves the directors with relatively consistent high-grossing movies. By consistent we mean they’ve made at least 3 movies and have one of the highest average per-movie revenues. This query uses dicing to select the movies along the DimTitle dimension and their corresponding directors in the DimCrew dimension.
+
+As a primary optimization, aside from the structure of the schema, you can see that most of the filtering was done on their respective tables prior to joining. This is also the case for most of the other queries, where the titleType = ‘movie’ filter is performed before joining with other tables. An inspection of the dataset reveals that this clause reduces the number of rows returned from DimTitle from around 1 million to a few thousand (apparently most of the IMDB data entries we have mapped are episodes, which should make sense).
+
+Another slice is done through the DimCrew dimension, which serves to further optimize the behavior of the query (since this query is only interested in looking at director performance).
+
+\begin{lstlisting}
+WITH MovieGrossRevenues(titleID, totalGrossRevenue) 
+AS (
+    SELECT 
+        fbor.titleID, 
+        SUM(fbor.grossRevenue) as totalGrossRevenue
+    FROM FactBoxOfficeRevenue fbor
+    JOIN ( 
+        SELECT dt.titleID
+        FROM DimTitle dt
+        WHERE dt.titleType = 'movie'
+    ) mov ON mov.titleID = fbor.titleID
+    GROUP BY fbor.titleID
+)
+    SELECT 
+        dp.primaryName, 
+        MIN(mgr.totalGrossRevenue) / 1000000 
+            AS minPerMovieRevenueInMillions, 
+        MAX(mgr.totalGrossRevenue) / 1000000 
+            AS maxPerMovieRevenueInMillions, 
+        AVG(mgr.totalGrossRevenue) / 1000000 
+            AS avgPerMovieRevenueInMillions, 
+        COUNT(mgr.totalGrossRevenue) AS totalMovies
+    FROM MovieGrossRevenues mgr
+    JOIN (
+        SELECT personID, titleID
+        FROM DimCrew dc
+        WHERE dc.position = 'director'
+    ) dir ON dir.titleID = mgr.titleID
+    JOIN DimPerson dp ON dp.personID = dir.personID
+    GROUP BY dir.personID
+    HAVING totalMovies >= 3
+    ORDER BY avgPerMovieRevenueInMillions DESC;
+\end{lstlisting}
+
+\paragraph{Query 2}
+This query summarizes the earnings for the movies of a particular genre across different time intervals. We can consider some of the operations here to represent a dicing of the dataset, since we’re filtering across multiple columns (titleType along the title dimension, and different date fields along the date dimension). The query also constitutes a rollup since we’re performing an aggregation across decreasing levels of granularity for the date dimension.
+
+Similar to the other queries, we filter along the DimTitle dimension before joining the fact tables. This time, since we’re including the genre to perform the filter, we also have way less rows to deal with during the join. Additionally, because we’ve indexed the date dimension along date IDs, joining and querying along this dimension is also way more efficient.
+\begin{lstlisting}
+WITH GenreMoviesRevenues(
+    titleID, 
+    primaryTitle, 
+    totalGrossRevenueDuringPeriodForMovie, 
+    year, 
+    month
+) AS (
+    WITH GenreMovies(titleID, primaryTitle) 
+    AS (
+        SELECT titleID, primaryTitle
+        FROM DimTitle
+        WHERE titleType = 'movie'
+        AND (
+            genre1 = 'horror'
+            OR genre2 = 'horror'
+            OR genre3 = 'horror'
+        )
+    )
+    SELECT 
+        gm.titleID, 
+        gm.primaryTitle, 
+        MAX(fbor.grossRevenueToDate) 
+            AS totalGrossRevenueDuringPeriodForMovie, 
+        dd.year, 
+        dd.month
+    FROM GenreMovies gm
+    JOIN FactBoxOfficeRevenue fbor
+    ON fbor.titleID = gm.titleID
+    JOIN DimDate dd
+    ON dd.dateID = fbor.revenueRecordDateID
+    GROUP BY 
+        gm.titleID, 
+        gm.primaryTitle, 
+        dd.year, 
+        dd.month
+)
+    SELECT 
+        SUM(totalGrossRevenueDuringPeriodForMovie) 
+            AS totalGrossRevenuesDuringPeriodForAllMovies, 
+        year, 
+        month
+    FROM GenreMoviesRevenues
+    GROUP BY year, month
+    WITH ROLLUP;
+\end{lstlisting}
+
+\paragraph{Query 3}
+This query determines directors with a fairly consistent ranking streak across at least 20 movies. We sort the directors according to their rating in descending order. Again this query constitutes dicing since we’re filtering across multiple dimensions.
+
+We perform a sequence of slices to arrive at the final dice of data we need. By doing these filters sequentially instead of after joining all three tables, we minimize the complexity of the resulting query.
+
+\begin{lstlisting}
+SELECT 
+    dp.primaryName, 
+    fff.finalAverageRating, 
+    fff.movieCount
+FROM DimPerson dp
+JOIN (
+    WITH DirMovs(titleID, personID, averageRating) 
+    AS (
+        SELECT 
+            frs.titleID, 
+            m.personID, 
+            AVG(frs.averageRating) 
+        FROM FactRatingSnapshot frs
+        JOIN (
+            SELECT dt.titleID, dir.personID
+            FROM DimTitle dt
+            JOIN (
+                SELECT titleID, personID
+                FROM DimCrew dc 
+                WHERE position = 'director'
+            ) dir
+            ON dt.titleID = dir.titleID
+            WHERE dt.titleType = 'movie'
+        ) m
+        ON m.titleID = frs.titleID
+        GROUP BY frs.titleID, m.personID
+    )
+        SELECT 
+            personID, 
+            AVG(averageRating) 
+                AS finalAverageRating, 
+            COUNT(titleID) 
+                AS movieCount
+        FROM DirMovs
+        GROUP BY personID
+        HAVING movieCount >= 20
+) fff
+ON fff.personID = dp.personID
+ORDER BY fff.finalAverageRating DESC;
+\end{lstlisting}
+
+\paragraph{Query 4} 
+This query looks for when a movie earned the most in a day, since the date of its release. It does this by first determining the max gross revenue (in a day) of each movie, and filters the fact table for that specific movie and revenue value. I guess this query essentially slices the revenue fact table based on the maximum revenue of each movie, and then joins the date table for more info. This was the most efficient implementation we could think of, but I'm not entirely sure if it's optimal. Nevertheless, another slight optimization performed here is the division by 1000000, which is performed only after aggregation instead of prior.
+\begin{lstlisting}
+WITH GrossRevenueByDate(
+    titleID, 
+    grossRevenue, 
+    daysSinceRelease, 
+    year, 
+    month, 
+    day
+) AS (
+    SELECT 
+        dt.titleID, 
+        fbor.grossRevenue, 
+        fbor.daysSinceRelease, 
+        dd.year, 
+        dd.month, 
+        dd.day
+    FROM (
+        SELECT titleID
+        FROM DimTitle
+        WHERE titleType = 'movie'
+    ) dt
+    JOIN FactBoxOfficeRevenue fbor 
+    ON dt.titleID = fbor.titleID
+    JOIN DimDate dd 
+    ON dd.dateID = fbor.revenueRecordDateID
+)
+    SELECT 
+        AVG(grd1.grossRevenue) / 1000000 
+            AS grossRevInMillions, 
+        grd1.daysSinceRelease
+    FROM GrossRevenueByDate grd1
+    JOIN (
+        SELECT 
+            MAX(grossRevenue) AS maxGrossRevenue, 
+            titleID
+        FROM GrossRevenueByDate
+        GROUP BY titleID
+    ) grd2
+    ON grd1.titleID = grd2.titleID
+    WHERE grd1.grossRevenue = grd2.maxGrossRevenue
+    AND daysSinceRelease IS NOT NULL
+    GROUP BY grd1.daysSinceRelease
+    ORDER BY grd1.daysSinceRelease;
+\end{lstlisting}
+
+\paragraph{Query 5}
+This query tries to look at the worst rated movies with the highest revenues. Because we’re filtering on multiple columns, we’re effectively dicing the dataset. This query also benefits from additional indices on the rating and revenue columns of their respective dimension tables, (although the next query was the primary reason for adding these). Similar to the previous query, the division by 1000000 is performed only after aggregation instead of prior.
+\begin{lstlisting}
+SELECT fbor.titleID,
+    lrm.primaryTitle,
+    SUM(grossRevenue) AS cumulativeRevenue,
+    AVG(lrm.averageRating) AS avgRating
+FROM FactBoxOfficeRevenue fbor
+JOIN (
+    SELECT 
+        dt.titleID, 
+        dt.primaryTitle, 
+        dt.startYear, 
+        lr.averageRating
+    FROM DimTitle dt
+    JOIN (
+        SELECT titleID, averageRating
+        FROM FactRatingSnapshot
+        WHERE averageRating < 4.0
+    ) lr ON lr.titleID = dt.titleID
+    WHERE dt.titleType = 'movie'
+) lrm ON lrm.titleID = fbor.titleID
+JOIN DimDate dd 
+ON dd.dateID = fbor.revenueRecordDateID
+GROUP BY titleID, lrm.primaryTitle
+ORDER BY cumulativeRevenue DESC
+LIMIT ? OFFSET ?;
+\end{lstlisting}
+
+
+\paragraph{Query 6}
+Our statistical query! A masterpiece I would say! This computes the spearman correlation between the revenue and the rating of a specific genre of movies. It does this by first generating a new column that holds the ranking of each row with regard to both rating and revenue. It then computes the coefficient through the formula based on those two ranks. To speed up the computation of this specific query, indexes were created for these two columns in their respective tables. This was the primary reason for creating these additional indices outside of the primary keys of the schema.
+\begin{lstlisting}
+WITH N(total, count) AS (
+  WITH Deltas(deltaSquared) AS (
+    WITH Ranks(revenueRank, ratingRank) AS (
+      WITH Movies(titleID) AS (
+        SELECT dt.titleID
+        FROM DimTitle dt
+        WHERE dt.titleType = 'movie'
+        AND (
+          dt.genre1 = ?
+          OR dt.genre2 = ?
+          OR dt.genre3 = ?
+        )
+      )
+        SELECT 
+          ROW_NUMBER() OVER (
+            ORDER BY 
+              tgr.totalGrossRevenueToDateInMillions DESC
+          ) AS revenueRank,
+          ROW_NUMBER() OVER (
+            ORDER BY tr.rating DESC
+          ) AS ratingRank
+        FROM (
+          SELECT 
+            m.titleID, 
+            MAX(grossRevenueToDate) / 1000000 
+              AS totalGrossRevenueToDateInMillions
+          FROM FactBoxOfficeRevenue fbor
+          JOIN Movies m
+          ON m.titleID = fbor.titleID 
+          GROUP BY m.titleID
+        ) tgr
+        JOIN (
+          SELECT 
+            m.titleID, 
+            MAX(frs.averageRating) 
+              AS rating
+          FROM FactRatingSnapshot frs 
+          JOIN Movies m
+          ON m.titleID = frs.titleID 
+          GROUP BY m.titleID
+        ) tr 
+        ON tgr.titleID = tr.titleID
+        ORDER BY revenueRank
+    )
+      SELECT 
+        revenueRank * revenueRank + 
+        ratingRank * ratingRank - 
+        2 * revenueRank * ratingRank 
+          AS deltaSquared
+      FROM Ranks
+  )
+    SELECT 
+      6 * SUM(deltaSquared) AS total, 
+      COUNT(*) AS count FROM Deltas
+)
+  SELECT 
+    total / (
+      count * count * count - 
+      count
+    ) AS spearman
+  FROM N;
+\end{lstlisting}
+
+\paragraph{Query 7}
+This query helps us determine whether or not revenue has seasonal patterns throughout the duration of a year. We plot the different revenues as line charts segregated by year, superimposed on top of each other within the same graph. This query uses a drill-down along the date dimension and performs a group by along the year, month, and day dimensions. A slight optimization performed here (similar to some of the previous queries) is the division by 1000000, which is performed only after aggregation instead of prior.
+\begin{lstlisting}
+WITH Movies(titleID) 
+AS ( 
+    SELECT dt.titleID
+    FROM DimTitle dt
+    WHERE dt.titleType = 'movie'
+)
+    SELECT 
+        SUM(fbor.grossRevenue) / 1000000 
+            AS totalRevenueThatDayInMillions, 
+        dd.year, 
+        dd.month, 
+        dd.day
+    FROM Movies m
+    JOIN FactBoxOfficeRevenue fbor 
+    ON fbor.titleID = m.titleID
+    JOIN DimDate dd 
+    ON dd.dateID = fbor.revenueRecordDateID
+    WHERE dd.year = ?
+    GROUP BY dd.year, dd.month, dd.day
+    ORDER BY dd.year, dd.month, dd.day;
+\end{lstlisting}

@@ -1,1 +1,53 @@
 \section{Results and Analysis}
+
+\subsection{Function Testing}
+
+For ETL scripts, since they were written in mostly pure SQL using the \verb|INSERT INTO... SELECT| syntax, the primary way it was tested is by executing the \verb|SELECT| statements inside the insert statements and looking at the output. Since a lot of time was spent analyzing the data during data profiling, the outputs of the scripts were able to be validated based on knowledge gained from the data profiling phase.
+
+For our OLAP scripts, we tried to be more systematic with our approach since these select queries could get a little convoluted (partly because we were aiming to optimize their performance). To wrap our heads around what we were doing, we broke up the queries sequentially and executed subqueries (and CTEs) individually. By verifying the output of each of the parts of the OLAP scripts, we were able to ascertain any issues with our logic that might've been present within all the mound of joins.
+
+In the case of half of the OLAP scripts, we also crafted equivalent (but less efficient) versions of the queries to make sure our selections were correct. If the outputs of our optimized queries were exactly the same as their counterparts, then certainly our logic was correct. In that regard, these acted more like sanity checks and greatly aided the debugging process for our OLAP scripts.
+
+
+\subsection{Performance Testing}
+
+For our performance testing, the main approach was to use various hardware and database configurations, and execute all 7 of our OLAP operations on them to see how it would affect the performance (See Appendix A).
+
+To ensure the integrity of our results, we ran our queries three times to negate any variations due to caching behavior. We then recorded the next 5 execution times in milliseconds, then got the average of those 5 execution times. We ran these tests on the final data warehouse we created (which was about 13 GB large). The \verb|EXPLAIN ANALYZE| command was also used to perform analyses on these queries; however, for the statistical query, a different approach was necessary as it was recursive in nature (which prevented the \verb|EXPLAIN ANALYZE| from properly interpreting it):
+
+\begin{lstlisting}
+SELECT TRUNCATE(TIMER_WAIT/1000000000,6) AS Duration 
+  FROM performance_schema.events_statements_history 
+  WHERE TIMER_START = (
+    SELECT MAX(TIMER_START) 
+      FROM performance_schema.events_statements_history
+  )
+\end{lstlisting}
+
+In the course of running these queries repeatedly, we found that the control group (those with the default CPU and memory settings) performed more or less similarly to those queries in setups with throttled CPU and decreased memory limits. Those two factors were not as significant as we thought in affecting query performance (assuming the specs of the server, which are notated below). Nevertheless, slight differences still arose between the execution times of these three setups, and the most noticeable of these happened when executing queries on the core-limited CPU. We posit that hyperthreading across multiple CPU cores may serve to degrade the performance of some queries (while speeding up the execution of others). These variations existed on a case-to-case basis, but it seems it has something to do with how the query is parallelized under the hood (which we unfortunately have no idea how to analyze).
+
+Aside from these two comparisons, we also ran tests on a simulated slow-down of disk speed and found that query performance was significantly impacted by this change. This makes sense, given that all our select queries involve disk reads, and prior to caching to memory a lot of disk IO operations are executed.
+
+But overall, beyond these hardware considerations (and the query optimizations of the previous sections), we spent a long time designing the structure of the warehouse to account for ease of access and scalability. Because of the thoroughness of thought placed into the design, we noticed that we mostly only needed to perform joins on primary keys, and additional indices were not that necessary (except for certain columns such as revenue and rating, both from their respective fact tables: however, these were primarily added because of the statistical query).
+
+\begin{verbatim}
+CONTROL:
+CPU: Cores 4
+RAM: 12 GB (12288MB)
+Disk: Unlimited bandwidth
+
+SLOW-CPU:
+CPU: Cores 1
+RAM: 12 GB (12288MB)
+Disk: Unlimited bandwidth
+
+LOW-RAM:
+CPU: Cores 4, CPU limit unlimited
+RAM: 2 GB (12288MB)
+Disk: Unlimited bandwidth
+
+SLOW-DISK:
+CPU: Cores 4, CPU limit unlimited
+RAM: 12 GB (12288MB)
+Disk: 100MB/s READ
+\end{verbatim}

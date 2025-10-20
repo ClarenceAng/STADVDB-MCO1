@@ -1,1 +1,18 @@
-\section{Appendices}
+\newpage
+\appendixpage{A. Performance Testing Results}
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{c|ccccccc}
+    & Query 1 & Query 2 & Query 3 & Query 4 & Query 5 & Query 6 & Query 7 \\
+    Control, Index & 912.6 & 1243 & 6062.2 & 2129 & 1731.4 & 2,503.60 & 1306.8 \\
+SlowDisk, Index & 1984 & 1237.4 & 15251.2 & 1871.2 & 1343 & 2,974.60 & 2120.8 \\
+Control, NoIndex & 1099.6 & 1283.6 & 9037.6 & 2456.8 & 1758.4 & 5,323.60 & 1303.2 \\ 
+SlowCPU, NoIndex & 1083 & 1252.6 & 9308.2 & 1897 & 1380 & 5,402.40 & 1752 \\ 
+LowMem, NoIndex & 1147.2 & 1255.4 & 9272 & 2131 & 1757.2 & 5,229.20 & 1316.6 \\ 
+SlowDisk, NoIndex & 2463.8 & 1251 & 22298 & 1878.4 & 1392.2 & 14,706.20 & 1922
+
+    \end{tabular}
+    \caption{Query Times (ms)}
+    \label{tab:my_label}
+\end{table}
