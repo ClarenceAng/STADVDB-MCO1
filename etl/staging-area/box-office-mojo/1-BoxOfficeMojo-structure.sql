@@ -51,8 +51,8 @@ CREATE TABLE IF NOT EXISTS BoxOfficeRevenue(
   `boxofficemojo_id` varchar(31) not null,
   `date` date not null,
   `gross` decimal(12,2) not null,
-  `gross_to_date` decimal(12,2) not null,
-  `days_released` int not null,
+  `gross_to_date` decimal(12,2),
+  `days_released` int,
   
   PRIMARY KEY (`id`),
   FOREIGN KEY (`boxofficemojo_id`) REFERENCES BoxOfficeMojoIds (`boxofficemojo_id`)
